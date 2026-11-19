@@ -29,10 +29,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages:
+          packages: ''
 
       - name: Install Android SDK 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Fix missing FileProvider
+        run: |
+          sed -i '/^dependencies[[:space:]]*{/a\    implementation "androidx.core:core:1.15.0"' app/build.gradle
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
