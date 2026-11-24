@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -42,7 +43,7 @@ public class ProfessionalExpertTest {
             assertJs("document.body.classList.contains('home-screen')"
                 + " && $('home').querySelector('.mockup-version').textContent === '1.2.0'"
                 + " && $('home').querySelectorAll('.tile').length === 8");
-            saveScreenshot("home-test.png");
+            saveScreenshot("home-test.png", true);
             js("window.messages = []; window.alert = message => messages.push(message); window.confirm = () => true");
             assertJs("data.clients[0].name === 'Клієнт 1.1.5' && data.orders[0].total === 550"
                 + " && data.reports[0].id === 'legacy-report' && data.prices[0][1] === 550");
@@ -134,16 +135,51 @@ public class ProfessionalExpertTest {
             await("data.clients.length === 2 && messages.at(-1) === 'Резервну копію відновлено'");
             click("nav [data-tab=archive]");
             assertJs("$('archiveList').textContent.includes('Новий клієнт') && $('pdfList').textContent.includes('.pdf')");
-            saveScreenshot("archive-test.png");
+            saveScreenshot("archive-test.png", false);
         } finally {
             instrumentation.runOnMainSync(activity::finish);
         }
     }
 
-    private void saveScreenshot(String name) throws Exception {
-        try (java.io.OutputStream screenshot = activity.openFileOutput(name, 0)) {
-            instrumentation.getUiAutomation().takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, screenshot);
+    private void saveScreenshot(String name, boolean verifyThermalArt) throws Exception {
+        CountDownLatch frame = new CountDownLatch(1);
+        instrumentation.runOnMainSync(() -> webView.postVisualStateCallback(0, new WebView.VisualStateCallback() {
+            @Override public void onComplete(long requestId) {
+                webView.postOnAnimation(() -> webView.postOnAnimation(frame::countDown));
+            }
+        }));
+        assertTrue("WebView did not draw", frame.await(10, TimeUnit.SECONDS));
+
+        for (int attempt = 0; attempt < 25; attempt++) {
+            Bitmap screenshot = instrumentation.getUiAutomation().takeScreenshot();
+            assertNotNull(screenshot);
+            try {
+                if (!verifyThermalArt || hasThermalArt(screenshot)) {
+                    try (java.io.OutputStream output = activity.openFileOutput(name, 0)) {
+                        assertTrue(screenshot.compress(Bitmap.CompressFormat.PNG, 100, output));
+                    }
+                    return;
+                }
+            } finally {
+                screenshot.recycle();
+            }
+            Thread.sleep(160);
         }
+        fail("The home screen artwork did not appear on the emulator display");
+    }
+
+    private boolean hasThermalArt(Bitmap screenshot) {
+        int coloredSamples = 0;
+        for (int y = screenshot.getHeight() / 12; y < screenshot.getHeight() / 3; y += 4) {
+            for (int x = 0; x < screenshot.getWidth(); x += 4) {
+                int pixel = screenshot.getPixel(x, y);
+                int red = android.graphics.Color.red(pixel);
+                int green = android.graphics.Color.green(pixel);
+                int blue = android.graphics.Color.blue(pixel);
+                if (red > 160 && red > green + 25 && red > blue + 30) coloredSamples++;
+            }
+        }
+        return coloredSamples >= 45;
     }
 
     private File verifyPdf() throws Exception {
