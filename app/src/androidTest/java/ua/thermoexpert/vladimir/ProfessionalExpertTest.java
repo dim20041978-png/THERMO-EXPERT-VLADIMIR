@@ -188,14 +188,19 @@ public class ProfessionalExpertTest {
         Uri uri = activity.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
         assertNotNull(uri);
         try {
+            // ACTION_CREATE_DOCUMENT returns a document that already exists.
+            // MediaStore inserts the row first and materializes it on open.
+            try (java.io.OutputStream destination = activity.getContentResolver().openOutputStream(uri)) {
+                assertNotNull(destination);
+            }
             Intent requested = captureIntent(selector, Intent.ACTION_CREATE_DOCUMENT,
                 new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent().setData(uri)));
             assertEquals("application/json", requested.getType());
-            for (int attempt = 0; attempt < 30; attempt++) {
+            for (int attempt = 0; attempt < 50; attempt++) {
                 try (InputStream input = activity.getContentResolver().openInputStream(uri)) {
                     assertNotNull(input);
                     return new JSONObject(new String(input.readAllBytes(), StandardCharsets.UTF_8));
-                } catch (org.json.JSONException incomplete) {
+                } catch (org.json.JSONException | java.io.FileNotFoundException incomplete) {
                     Thread.sleep(150);
                 }
             }
