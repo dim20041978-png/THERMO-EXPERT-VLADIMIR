@@ -34,7 +34,7 @@ public class ProfessionalExpertTest {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activity = (MainActivity) instrumentation.startActivitySync(launch);
         instrumentation.runOnMainSync(() -> webView = (WebView)
-            ((android.view.ViewGroup) activity.findViewById(android.R.id.content).getChildAt(0)).getChildAt(0));
+            ((android.view.ViewGroup) activity.<android.view.ViewGroup>findViewById(android.R.id.content).getChildAt(0)).getChildAt(0));
         try {
             await("document.readyState === 'complete' && typeof goBack === 'function'");
             assertJs("document.images.length >= 12 && Array.from(document.images).every(i => i.naturalWidth > 0)");
@@ -112,7 +112,7 @@ public class ProfessionalExpertTest {
             assertEquals(manual.toString(), daily.toString());
             assertEquals(2, daily.getJSONArray("clients").length());
             assertTrue(daily.getJSONArray("findings").getJSONObject(1).getString("photo").startsWith("data:image/png;base64,"));
-            JSONArray storedFindings = new JSONObject(Files.readString(new File(activity.getFilesDir(), "database.json").toPath()))
+            JSONArray storedFindings = new JSONObject(new String(Files.readAllBytes(new File(activity.getFilesDir(), "database.json").toPath()), StandardCharsets.UTF_8))
                 .getJSONArray("findings");
             assertTrue(storedFindings.getJSONObject(1).getString("photo").startsWith("photo:"));
 
