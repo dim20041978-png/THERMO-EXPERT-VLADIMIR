@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
+import android.view.WindowInsets;
+import android.widget.FrameLayout;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -14,16 +17,33 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private static final int FILE_CHOOSER_REQUEST = 1001;
+    private static final int BACKUP_REQUEST = 1002;
+    private java.io.File pendingBackup;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         BackupJob.schedule(this);
         webView = new WebView(this);
-        setContentView(webView);
+        FrameLayout content = new FrameLayout(this);
+        content.setBackgroundColor(0xff092443);
+        content.addView(webView, new FrameLayout.LayoutParams(-1, -1));
+        if (Build.VERSION.SDK_INT >= 35) {
+            content.setOnApplyWindowInsetsListener((view, insets) -> {
+                android.graphics.Insets safe = insets.getInsets(WindowInsets.Type.systemBars()
+                    | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
+                view.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+                return WindowInsets.CONSUMED;
+            });
+        }
+        setContentView(content);
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::navigateBack);
+        }
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
-        settings.setAllowFileAccess(true);
+        settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setSupportZoom(true);
         settings.setBuiltInZoomControls(false);
@@ -41,11 +61,15 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
-        if (savedInstanceState == null) webView.loadUrl("file:///android_asset/index.html");
-        else webView.restoreState(savedInstanceState);
+        if (savedInstanceState != null) {
+            String name = savedInstanceState.getString("pendingBackup");
+            if (name != null) pendingBackup = new java.io.File(getCacheDir(), name);
+        }
+        if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
+            webView.loadUrl("file:///android_asset/index.html");
+        }
     }
 
-    private String pendingBackup;
     private synchronized void writeAtomic(java.io.File file, String value) throws java.io.IOException {
         android.util.AtomicFile atomic = new android.util.AtomicFile(file);
         java.io.FileOutputStream out = atomic.startWrite();
@@ -81,27 +105,50 @@ public class MainActivity extends Activity {
             return root.toString();
         }
         @android.webkit.JavascriptInterface public String loadData() {
-            java.io.File file = new java.io.File(getFilesDir(), "database.json");
-            if (!file.exists() && !new java.io.File(file.getPath()+".bak").exists()) return "";
-            try { return convertPhotos(new String(new android.util.AtomicFile(file).readFully(), java.nio.charset.StandardCharsets.UTF_8), true); }
-            catch (Exception e) { return "ERROR"; }
+            synchronized (BackupJob.class) {
+                java.io.File file = new java.io.File(getFilesDir(), "database.json");
+                if (!file.exists() && !new java.io.File(file.getPath() + ".bak").exists()) return "";
+                try {
+                    byte[] bytes = new android.util.AtomicFile(file).readFully();
+                    return convertPhotos(new String(bytes, java.nio.charset.StandardCharsets.UTF_8), true);
+                } catch (Exception error) {
+                    return "ERROR";
+                }
+            }
         }
+
         @android.webkit.JavascriptInterface public boolean saveData(String json) {
-            try { synchronized (BackupJob.class) { new org.json.JSONObject(json); writeAtomic(new java.io.File(getFilesDir(), "database.json"), convertPhotos(json, false)); return true; } }
-            catch (Exception e) { return false; }
+            synchronized (BackupJob.class) {
+                try {
+                    writeAtomic(new java.io.File(getFilesDir(), "database.json"), convertPhotos(json, false));
+                    return true;
+                } catch (Exception error) {
+                    return false;
+                }
+            }
         }
-        @android.webkit.JavascriptInterface public boolean dailyBackup(String json) {
+
+        @android.webkit.JavascriptInterface public boolean dailyBackup() {
             try { return BackupJob.backup(MainActivity.this); }
-            catch (Exception e) { return false; }
+            catch (Exception error) { return false; }
         }
 
         @android.webkit.JavascriptInterface public void exportDailyBackup() {
-            java.io.File dir = new java.io.File(getFilesDir(), "backups");
-            java.io.File[] files = dir.listFiles((d,n) -> n.endsWith(".json"));
-            if (files == null || files.length == 0) { runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,"Немає автоматичних копій",0).show()); return; }
-            java.util.Arrays.sort(files);
-            try { exportBackup(new String(new android.util.AtomicFile(files[files.length-1]).readFully(), java.nio.charset.StandardCharsets.UTF_8)); }
-            catch (Exception e) { runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,"Помилка читання копії",1).show()); }
+            synchronized (BackupJob.class) {
+                java.io.File dir = new java.io.File(getFilesDir(), "backups");
+                java.io.File[] files = dir.listFiles((parent, name) -> name.matches("\\d{4}-\\d{2}-\\d{2}\\.json"));
+                if (files == null || files.length == 0) {
+                    toast("Немає автоматичних копій");
+                    return;
+                }
+                java.util.Arrays.sort(files);
+                try {
+                    byte[] bytes = new android.util.AtomicFile(files[files.length - 1]).readFully();
+                    exportBackup(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+                } catch (Exception error) {
+                    toast("Помилка читання копії");
+                }
+            }
         }
 
         @android.webkit.JavascriptInterface public void savePdf(String json) {
@@ -110,7 +157,7 @@ public class MainActivity extends Activity {
                 try { message = ReportPdf.save(MainActivity.this, json); }
                 catch (Exception e) { message = "Помилка PDF: " + e.getMessage(); }
                 final String result = message;
-                runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,result,1).show());
+                toast(result);
             }).start();
         }
         @android.webkit.JavascriptInterface public void sharePdf(String json) {
@@ -137,13 +184,43 @@ public class MainActivity extends Activity {
             });
         }
         @android.webkit.JavascriptInterface public void exportBackup(String json) {
-            runOnUiThread(() -> {
-                pendingBackup = json;
-                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json").putExtra(Intent.EXTRA_TITLE,"thermo-backup-"+System.currentTimeMillis()+".json");
-                startActivityForResult(intent,1002);
-            });
+            try {
+                java.io.File snapshot = java.io.File.createTempFile("backup-export-", ".json", getCacheDir());
+                try {
+                    writeAtomic(snapshot, json);
+                } catch (java.io.IOException error) {
+                    snapshot.delete();
+                    throw error;
+                }
+                runOnUiThread(() -> chooseBackupDestination(snapshot));
+            } catch (java.io.IOException error) {
+                toast("Не вдалося підготувати резервну копію");
+            }
         }
     }
+
+    private void toast(String message) {
+        runOnUiThread(() -> android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show());
+    }
+
+    private void chooseBackupDestination(java.io.File snapshot) {
+        if (pendingBackup != null) {
+            snapshot.delete();
+            return;
+        }
+        pendingBackup = snapshot;
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+            .setType("application/json").putExtra(Intent.EXTRA_TITLE,
+                "thermo-backup-" + System.currentTimeMillis() + ".json");
+        try {
+            startActivityForResult(intent, BACKUP_REQUEST);
+        } catch (android.content.ActivityNotFoundException error) {
+            pendingBackup = null;
+            snapshot.delete();
+            toast("Не знайдено програму для збереження копії");
+        }
+    }
+
     private void openPdf(java.io.File file,boolean share) {
         try {
             if(file==null||!file.isFile())throw new java.io.IOException();
@@ -156,15 +233,15 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1002) {
-            if (resultCode == RESULT_OK && data != null && pendingBackup != null) {
-                try (java.io.OutputStream out = getContentResolver().openOutputStream(data.getData())) {
-                    if (out == null) throw new java.io.IOException();
-                    out.write(pendingBackup.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                    android.widget.Toast.makeText(this,"Копію збережено",0).show();
-                } catch (Exception e) { android.widget.Toast.makeText(this,"Помилка збереження",1).show(); }
-            }
+        if (requestCode == BACKUP_REQUEST && pendingBackup != null) {
+            java.io.File snapshot = pendingBackup;
             pendingBackup = null;
+            Uri destination = data == null ? null : data.getData();
+            if (resultCode != RESULT_OK || destination == null) {
+                snapshot.delete();
+            } else {
+                new Thread(() -> saveBackupTo(snapshot, destination)).start();
+            }
         }
         if (requestCode == FILE_CHOOSER_REQUEST && fileCallback != null) {
             Uri[] results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
@@ -173,13 +250,34 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void saveBackupTo(java.io.File snapshot, Uri destination) {
+        try (java.io.InputStream in = new java.io.FileInputStream(snapshot);
+             java.io.OutputStream out = getContentResolver().openOutputStream(destination, "wt")) {
+            if (out == null) throw new java.io.IOException("Backup destination unavailable");
+            byte[] buffer = new byte[8192];
+            int size;
+            while ((size = in.read(buffer)) != -1) out.write(buffer, 0, size);
+            toast("Копію збережено");
+        } catch (Exception error) {
+            toast("Помилка збереження копії");
+        } finally {
+            snapshot.delete();
+        }
+    }
+
     @Override protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (webView != null) webView.saveState(outState);
+        if (pendingBackup != null) outState.putString("pendingBackup", pendingBackup.getName());
+    }
+
+    private void navigateBack() {
+        webView.evaluateJavascript("typeof goBack === 'function' && goBack()", handled -> {
+            if (!"true".equals(handled)) finish();
+        });
     }
 
     @Override public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        navigateBack();
     }
 }

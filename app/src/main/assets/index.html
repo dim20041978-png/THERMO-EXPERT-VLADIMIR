@@ -2,118 +2,112 @@
 <html lang="uk">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14283b"><link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#092443">
+<link rel="stylesheet" href="professional.css">
 <title>THERMO EXPERT VLADIMIR</title>
-<style>
-:root{--navy:#14283b;--blue:#244963;--gold:#e5a52b;--bg:#f3f6f8;--ink:#172635;--muted:#687987;--line:#dce4e9}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
-header{background:var(--navy);color:white;padding:20px 16px 16px;position:sticky;top:0;z-index:3}header b{font-size:17px;letter-spacing:.5px}header small{display:block;color:#c7d5df;margin-top:4px}
-nav{display:flex;gap:7px;overflow:auto;padding:10px;background:white;position:sticky;top:73px;z-index:2;border-bottom:1px solid var(--line)}
-nav button{white-space:nowrap;border:0;border-radius:20px;padding:9px 13px;background:#edf2f5;color:#294256;font-weight:600}nav button.active{background:var(--navy);color:white}
-main{max-width:850px;margin:auto;padding:15px}.panel{display:none}.panel.active{display:block}
-.card{background:white;border:1px solid var(--line);border-radius:14px;padding:15px;margin:0 0 13px;box-shadow:0 2px 8px #14283b08}
-h2{font-size:20px;margin:4px 0 13px}h3{font-size:16px;margin:0 0 10px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:#f5f8fa;padding:13px;border-radius:11px}.stat strong{display:block;font-size:23px;color:var(--blue)}
-label{display:block;font-size:13px;font-weight:650;color:#405363;margin:10px 0 5px}
-input,select,textarea{width:100%;border:1px solid #cbd6dd;border-radius:9px;padding:11px;background:white;font:inherit;color:var(--ink)}textarea{min-height:75px;resize:vertical}
-button.primary,.action{border:0;border-radius:10px;background:var(--navy);color:white;padding:11px 15px;font-weight:700;cursor:pointer}.secondary{border:1px solid var(--line);border-radius:10px;background:white;padding:10px 13px;font-weight:650;color:var(--blue)}.danger{background:#fff0ed;color:#a83c2d;border:0;border-radius:9px;padding:8px 10px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.item{border-top:1px solid var(--line);padding:12px 0}.item:first-child{border-top:0}.muted{color:var(--muted);font-size:13px}.pill{display:inline-block;background:#fff3d8;color:#805300;border-radius:20px;padding:4px 8px;font-size:12px}
-.photo{width:100%;max-height:240px;object-fit:contain;background:#e9eef1;border-radius:9px;margin-top:8px}
-table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:9px 5px;border-bottom:1px solid var(--line);font-size:14px}td:last-child,th:last-child{text-align:right}
-.empty{padding:20px;text-align:center;color:var(--muted)}.hidden{display:none!important}
-@media(min-width:650px){.grid.two{grid-template-columns:1fr 1fr}}
-@media print{header,nav,.no-print,button{display:none!important}body{background:white}main{padding:0;max-width:none}.panel{display:none!important}#report.panel.active{display:block!important}.card{box-shadow:none;break-inside:avoid;border:0;padding:4px}}
-@media screen{body{background:linear-gradient(#dcefff,#a9d1f0);padding-bottom:78px}header{position:relative;background:linear-gradient(145deg,#03142e,#0067b1);text-align:center;padding:24px 12px}header b{font-size:24px;color:#fff}header small{color:#ffdb46}nav{position:fixed;top:auto;bottom:0;left:0;right:0;background:linear-gradient(#075c9d,#031a39);z-index:5;padding:8px;justify-content:space-around}nav button{background:transparent;color:white;border-radius:9px;padding:12px 8px}nav button.active{color:#ffda32;background:#124b83}main{padding:10px}.tile{min-height:110px;border:3px solid #e6f6ff;border-radius:17px;background:linear-gradient(155deg,#1189c8,#00366c 45%,#041b3c);color:white;font-weight:750;font-size:15px;box-shadow:0 3px 6px #285b82,inset 0 1px 5px #8bdcff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}.tile span{font-size:32px}.card{border-color:#90b8d8}.primary,.action{background:linear-gradient(#087cba,#053668)!important}.hero{background:linear-gradient(120deg,#00274f,#086fb3);color:white;border-radius:15px;padding:18px;text-align:center;margin-bottom:10px}.hero strong{color:#ffdb46;font-size:23px}}</style></head>
+</head>
 <body>
-<header><b>THERMO EXPERT VLADIMIR</b><small>Тепловізійна діагностика · Клієнти · Звіти</small></header>
-<nav class="no-print"><button class="active" data-tab="home">Головна</button><button data-tab="catalog">Каталог</button><button data-tab="archive">Архів звітів</button><button data-tab="info">Інфо</button></nav>
+<header class="app-header">
+  <button id="backButton" class="back-button" type="button" aria-label="Назад" hidden>‹</button>
+  <div class="brand">
+    <img src="art/home.png" alt="" width="34" height="34">
+    <div><b>THERMO EXPERT VLADIMIR</b><small>Professional Expert</small></div>
+  </div>
+</header>
+<nav class="no-print" aria-label="Основна навігація">
+  <button data-tab="home" class="active" aria-current="page"><img src="art/home.png" alt="">Головна</button>
+  <button data-tab="catalog"><img src="art/catalog.png" alt="">Каталог</button>
+  <button data-tab="archive"><img src="art/reports.png" alt="">Архів звітів</button>
+  <button data-tab="info"><img src="art/info.png" alt="">Інфо</button>
+</nav>
 <main>
 <section id="home" class="panel active">
-<div class="hero"><strong>THERMO EXPERT</strong><br>Тепловізійна діагностика · Енергоефективність · Звіти</div><div class="grid"><button class="tile" onclick="startInspection(0)"><span>🏠</span>Обстеження будинку</button><button class="tile" onclick="startInspection(1)"><span>⚡</span>Діагностика електрики</button><button class="tile" onclick="startInspection(2)"><span>♨</span>Тепла підлога</button><button class="tile" onclick="startInspection(3)"><span>▥</span>Система опалення</button><button class="tile" onclick="startInspection(4)"><span>💧</span>Інженерні системи</button><button class="tile" onclick="startInspection(5)"><span>🌿</span>Енергоаудит та рекомендації</button><button class="tile" onclick="tab('archive')"><span>▤</span>Звіти (Акти, PDF)</button><button class="tile" onclick="tab('settings')"><span>⚙</span>Параметри</button></div><h2 style="margin-top:18px">Робочий кабінет</h2><div class="grid">
+<div class="hero">
+  <h1>Тепловізійні<br>обстеження</h1>
+  <small>Енергоаудит та звіти</small>
+</div>
+<div class="grid service-grid" aria-label="Напрями обстежень і функції">
+  <button class="tile" data-inspection="Будинок / тепловтрати"><img src="art/home.png" alt="">Обстеження будинку</button>
+  <button class="tile" data-inspection="Електропроводка"><img src="art/power.png" alt="">Діагностика електрики</button>
+  <button class="tile" data-inspection="Тепла підлога"><img src="art/floor.png" alt="">Тепла підлога</button>
+  <button class="tile" data-inspection="Система опалення"><img src="art/heating.png" alt="">Система опалення</button>
+  <button class="tile" data-inspection="Інженерні системи"><img src="art/water.png" alt="">Інженерні системи</button>
+  <button class="tile" data-inspection="Енергоаудит"><img src="art/audit.png" alt="">Енергоаудит та рекомендації</button>
+  <button class="tile" onclick="tab('archive')"><img src="art/reports.png" alt="">Звіти (акти, PDF)</button>
+  <button class="tile" onclick="tab('settings')"><img src="art/settings.png" alt="">Параметри</button>
+</div>
+<h2 class="workspace-heading">Робочий кабінет</h2>
+<div class="grid stats">
 <div class="stat"><strong id="countClients">0</strong><span>Клієнтів</span></div><div class="stat"><strong id="countOrders">0</strong><span>Замовлень</span></div>
 <div class="stat"><strong id="countReports">0</strong><span>Обстежень</span></div><div class="stat"><strong id="sumPaid">0 ₴</strong><span>Отримано оплат</span></div></div>
-<div class="card" style="margin-top:13px"><h3>Швидкий початок</h3><p class="muted">Створи клієнта, додай замовлення, зафіксуй результати обстеження та сформуй PDF-звіт.</p><div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button><button class="secondary" onclick="tab('inspection')">Нове обстеження</button></div></div>
-<div class="card"><h3>Збереження даних</h3><p class="muted">Дані зберігаються у внутрішньому сховищі програми. Автоматична копія створюється раз на день під час користування програмою. Експортуйте копії для захисту від видалення програми.</p><div class="actions"><button class="secondary" onclick="backup()">Експорт резервної копії</button><button class="secondary" onclick="if(window.Native) Native.exportDailyBackup()">Експорт останньої автоматичної копії</button><label class="secondary" style="display:inline-block;cursor:pointer">Імпорт копії<input type="file" accept="application/json" hidden onchange="restore(event)"></label></div></div>
+<div class="card"><h3>Швидкий початок</h3><p class="muted">Створи клієнта, додай замовлення, зафіксуй результати обстеження та сформуй PDF-звіт.</p><div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button><button class="secondary" onclick="tab('inspection')">Нове обстеження</button></div></div>
+<div class="card"><h3>Збереження даних</h3><p class="muted">Дані зберігаються у внутрішньому сховищі програми. Автоматична копія створюється раз на день під час користування програмою. Експортуйте копії для захисту від видалення програми.</p><div class="actions"><button class="secondary" onclick="backup()">Експорт резервної копії</button><button class="secondary" onclick="exportDailyBackup()">Експорт останньої автоматичної копії</button><label class="secondary import-button">Імпорт копії<input type="file" accept=".json,application/json" aria-label="Імпорт резервної копії" onchange="restore(event)"></label></div></div>
 </section>
 <section id="clients" class="panel">
 <h2>Клієнти</h2><div class="card">
-<h3>Новий клієнт</h3><label>ПІБ / Назва</label><input id="cName" placeholder="Прізвище, ім'я клієнта">
-<label>Телефон</label><input id="cPhone" type="tel" placeholder="+380...">
-<label>Адреса об'єкта</label><input id="cAddress" placeholder="Місто, вулиця, будинок">
-<label>Тип об'єкта</label><select id="cType"><option>Приватний будинок</option><option>Квартира</option><option>Офіс</option><option>Підприємство</option><option>Інше</option></select>
-<label>Примітки</label><textarea id="cNote"></textarea><div class="actions"><button class="primary" onclick="addClient()">Зберегти клієнта</button></div></div>
+<h3>Новий клієнт</h3><label for="cName">ПІБ / Назва</label><input id="cName" placeholder="Прізвище, ім'я клієнта">
+<label for="cPhone">Телефон</label><input id="cPhone" type="tel" placeholder="+380...">
+<label for="cAddress">Адреса об'єкта</label><input id="cAddress" placeholder="Місто, вулиця, будинок">
+<label for="cType">Тип об'єкта</label><select id="cType"><option>Приватний будинок</option><option>Квартира</option><option>Офіс</option><option>Підприємство</option><option>Інше</option></select>
+<label for="cNote">Примітки</label><textarea id="cNote"></textarea><div class="actions"><button class="primary" onclick="addClient()">Зберегти клієнта</button></div></div>
 <div class="card"><h3>База клієнтів</h3><div id="clientList" class="empty">Поки немає клієнтів</div></div>
 </section>
 <section id="orders" class="panel">
 <h2>Замовлення та розрахунок</h2><div class="card">
-<label>Клієнт</label><select id="oClient"></select><label>Послуга</label><select id="oService"><option value="Обстеження будинку">Обстеження будинку</option><option value="Тепла підлога">Тепла підлога</option><option value="Електропроводка">Електропроводка</option><option value="Додаткове приміщення">Додаткове приміщення</option><option value="PDF-звіт">PDF-звіт</option></select>
-<label>Кількість</label><input id="oQty" type="number" min="1" value="1" oninput="calcOrder()"><label>Ціна за одиницю, грн</label><input id="oPrice" type="number" min="0" value="1500" oninput="calcOrder()"><label>Знижка, грн</label><input id="oDiscount" type="number" min="0" value="0" oninput="calcOrder()"><label>Оплачено, грн</label><input id="oPaid" type="number" min="0" value="0">
-<p><b>До сплати: <span id="oTotal">1500</span> грн</b></p><label>Статус</label><select id="oStatus"><option>Нове</option><option>Заплановане</option><option>В роботі</option><option>Виконане</option><option>Оплачене</option></select><div class="actions"><button class="primary" onclick="addOrder()">Зберегти замовлення</button></div></div>
+<label for="oClient">Клієнт</label><select id="oClient"></select><label for="oService">Послуга</label><select id="oService"><option value="Обстеження будинку">Обстеження будинку</option><option value="Тепла підлога">Тепла підлога</option><option value="Електропроводка">Електропроводка</option><option value="Додаткове приміщення">Додаткове приміщення</option><option value="PDF-звіт">PDF-звіт</option></select>
+<label for="oQty">Кількість</label><input id="oQty" type="number" min="1" value="1" oninput="calcOrder()"><label for="oPrice">Ціна за одиницю, грн</label><input id="oPrice" type="number" min="0" step=".01" value="1500" oninput="calcOrder()"><label for="oDiscount">Знижка, грн</label><input id="oDiscount" type="number" min="0" step=".01" value="0" oninput="calcOrder()"><label for="oPaid">Оплачено, грн</label><input id="oPaid" type="number" min="0" step=".01" value="0">
+<p><b>До сплати: <span id="oTotal">1500</span> грн</b></p><label for="oStatus">Статус</label><select id="oStatus"><option>Нове</option><option>Заплановане</option><option>В роботі</option><option>Виконане</option><option>Оплачене</option></select><div class="actions"><button class="primary" onclick="addOrder()">Зберегти замовлення</button></div></div>
 <div class="card"><h3>Історія замовлень</h3><div id="orderList" class="empty">Замовлень ще немає</div></div>
 </section>
 <section id="inspection" class="panel">
 <h2>Тепловізійне обстеження</h2><div class="card">
-<label>Клієнт</label><select id="iClient"></select><label>Тип обстеження</label><select id="iType"><option>Будинок / тепловтрати</option><option>Тепла підлога</option><option>Електропроводка</option><option>Система опалення</option><option>Інженерні системи</option><option>Енергоаудит</option></select>
-<label>Назва приміщення / ділянки</label><input id="iRoom" placeholder="Наприклад: кухня, електрощит">
-<div class="grid two"><div><label>Температура повітря, °C</label><input id="iAir" type="number" step=".1"></div><div><label>Температура поверхні, °C</label><input id="iSurface" type="number" step=".1"></div></div>
-<label>Вологість, % (за наявності)</label><input id="iHumidity" type="number" min="0" max="100">
-<label>Фото тепловізора / камери</label><input id="iPhoto" type="file" accept="image/*" capture="environment">
-<label>Опис спостереження / дефекту</label><textarea id="iDefect" placeholder="Опишіть місце та характер температурної аномалії"></textarea>
-<label>Рекомендації</label><textarea id="iRecommendation"></textarea>
-<div class="actions"><button class="primary" onclick="addFinding()">Додати результат</button></div></div>
+<label for="iClient">Клієнт</label><select id="iClient"></select><label for="iType">Тип обстеження</label><select id="iType"><option>Будинок / тепловтрати</option><option>Тепла підлога</option><option>Електропроводка</option><option>Система опалення</option><option>Інженерні системи</option><option>Енергоаудит</option></select>
+<label for="iRoom">Назва приміщення / ділянки</label><input id="iRoom" placeholder="Наприклад: кухня, електрощит">
+<div class="grid two"><div><label for="iAir">Температура повітря, °C</label><input id="iAir" type="number" step=".1"></div><div><label for="iSurface">Температура поверхні, °C</label><input id="iSurface" type="number" step=".1"></div></div>
+<label for="iHumidity">Вологість, % (за наявності)</label><input id="iHumidity" type="number" min="0" max="100">
+<label for="iPhoto">Фото тепловізора / камери</label><input id="iPhoto" type="file" accept="image/*" capture="environment">
+<label for="iDefect">Опис спостереження / дефекту</label><textarea id="iDefect" placeholder="Опишіть місце та характер температурної аномалії"></textarea>
+<label for="iRecommendation">Рекомендації</label><textarea id="iRecommendation"></textarea>
+<div class="actions"><button class="primary" id="addFindingButton" onclick="addFinding()">Додати результат</button></div></div>
 <div class="card"><h3>Результати поточного обстеження</h3><div id="findingList" class="empty">Ще немає доданих результатів</div></div>
-<div class="card"><h3>Підсумковий висновок експерта</h3><label>Загальний висновок</label><textarea id="iConclusion" placeholder="Підсумковий висновок за результатами обстеження..."></textarea><label>Експерт / виконавець</label><input id="iExpert" value="Експерт THERMO EXPERT VLADIMIR"><div class="actions"><button class="primary" onclick="saveReport()">Зберегти обстеження</button><button class="secondary" onclick="makeReport()">Сформувати PDF / Друк</button></div></div>
+<div class="card"><h3>Підсумковий висновок експерта</h3><label for="iConclusion">Загальний висновок</label><textarea id="iConclusion" placeholder="Підсумковий висновок за результатами обстеження..."></textarea><label for="iExpert">Експерт / виконавець</label><input id="iExpert" value="Експерт THERMO EXPERT VLADIMIR"><div class="actions"><button class="primary" onclick="saveReport()">Зберегти обстеження</button><button class="secondary" onclick="makeReport()">Сформувати PDF / Друк</button></div></div>
 </section>
 <section id="prices" class="panel">
 <h2>Прайс-лист</h2><div class="card"><p class="muted">Редагуй ціни відповідно до власного прайсу. Початкові суми демонстраційні.</p><div id="priceList"></div><div class="actions"><button class="primary" onclick="savePrices()">Зберегти ціни</button></div></div>
 </section>
-<section id="archive" class="panel"><h2>Архів обстежень</h2><div class="card" id="archiveList"></div><div class="card"><h3>Збережені PDF</h3><button class="secondary" onclick="renderPdfs()">Оновити список</button><div id="pdfList"></div></div></section><section id="report" class="panel">
-<div id="reportContent"></div><div class="actions no-print"><button class="primary" onclick="savePdf()">Зберегти PDF</button><button class="primary" onclick="sharePdf()">Надіслати PDF</button><button class="primary" onclick="if(window.Native) Native.printReport(); else window.print()">Друкувати / Зберегти PDF</button><button class="secondary" onclick="tab('inspection')">Назад</button></div>
+<section id="archive" class="panel"><h2>Архів обстежень</h2><div class="card" id="archiveList"></div><div class="card"><div class="section-heading"><h3>Збережені PDF</h3><button class="secondary" onclick="renderPdfs()">Оновити список</button></div><div id="pdfList"></div></div></section><section id="report" class="panel">
+<div id="reportContent"></div><div class="actions no-print"><button class="primary" onclick="savePdf()">Зберегти PDF</button><button class="primary" onclick="sharePdf()">Надіслати PDF</button><button class="primary" onclick="if(window.Native) Native.printReport(); else window.print()">Друкувати / Зберегти PDF</button><button class="secondary" onclick="goBack()">Назад</button></div>
 </section>
-<section id="settings" class="panel"><h2>Параметри</h2><div class="card"><button class="secondary" onclick="backup()">Експорт резервної копії</button><button class="secondary" onclick="if(window.Native)Native.exportDailyBackup()">Автоматична копія</button><label>Імпорт копії<input type="file" accept="application/json" onchange="restore(event)"></label><button class="secondary" onclick="tab('prices')">Прайс</button></div></section><section id="catalog" class="panel"><h2>Каталог</h2><div class="card"><button class="primary" onclick="tab('clients')">Клієнти</button> <button class="primary" onclick="tab('orders')">Замовлення</button> <button class="secondary" onclick="tab('prices')">Прайс</button></div></section><section id="info" class="panel"><h2>THERMO EXPERT VLADIMIR</h2><div class="card">Professional Expert — тепловізійна діагностика. Результати оцінює фахівець.</div></section></main>
-<script>
-const DB='thermo-expert-vladimir-v1';
-let data={clients:[],orders:[],findings:[],reports:[],prices:[['Обстеження будинку',1500],['Тепла підлога',500],['Електропроводка',700],['Додаткове приміщення',150],['PDF-звіт',300]]};
-const $=id=>document.getElementById(id);
-let storageBlocked=false;
-function load(){try{let raw=window.Native?Native.loadData():'';if(raw==='ERROR')throw Error('read');let x=JSON.parse(raw||localStorage.getItem(DB)||'null');if(x)data={...data,...x};if(window.Native){if(!Native.saveData(JSON.stringify(data)))throw Error('write');Native.dailyBackup(JSON.stringify(data));}}catch(e){storageBlocked=true;alert('Помилка читання або перенесення даних. Збереження заблоковано для захисту записів.')}}
-function persist(){try{if(storageBlocked)throw Error('blocked');let raw=JSON.stringify(data);if(window.Native){if(!Native.saveData(raw))throw Error('write');if(!Native.dailyBackup(raw))alert('Дані збережено, але автоматичну копію створити не вдалося.');}else localStorage.setItem(DB,raw);render();return true}catch(e){alert('Не вдалося зберегти дані. Експортуйте резервну копію.');return false}}
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function tab(id){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));if(id==='archive')renderPdfs();if(id==='report')$('report').classList.add('active');window.scrollTo(0,0)}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
-function startInspection(i){tab('inspection');$('iType').value=["Будинок / тепловтрати","Електропроводка","Тепла підлога","Система опалення","Інженерні системи","Енергоаудит"][i];} function addClient(){let name=$('cName').value.trim();if(!name)return alert('Вкажи ім’я або назву клієнта');data.clients.push({id:uid(),name,phone:$('cPhone').value,address:$('cAddress').value,type:$('cType').value,note:$('cNote').value});['cName','cPhone','cAddress','cNote'].forEach(x=>$(x).value='');persist()}
-function clientName(id){return data.clients.find(c=>c.id===id)?.name||'Клієнт видалений'}
-function addOrder(){let cid=$('oClient').value;if(!cid)return alert('Спочатку створи клієнта');if(["oQty","oPrice","oDiscount","oPaid"].some(id=>!$(id).checkValidity()||$(id).value===""))return alert("Перевірте числові поля");let total=Math.max(0,+$('oQty').value*+$('oPrice').value-+$('oDiscount').value);data.orders.unshift({id:uid(),cid,service:$('oService').value,qty:+$('oQty').value,price:+$('oPrice').value,discount:+$('oDiscount').value,total,paid:+$('oPaid').value,status:$('oStatus').value,date:new Date().toLocaleDateString('uk-UA')});persist()}
-function calcOrder(){$('oTotal').textContent=Math.max(0,+$('oQty').value*+$('oPrice').value-+$('oDiscount').value).toFixed(2)}
-async function addFinding(){let cid=$('iClient').value;if(!cid)return alert('Спочатку створи клієнта');let f={id:uid(),cid,type:$('iType').value,room:$('iRoom').value,air:$('iAir').value,surface:$('iSurface').value,humidity:$('iHumidity').value,defect:$('iDefect').value,recommendation:$('iRecommendation').value,date:new Date().toLocaleDateString('uk-UA'),photo:''};let file=$('iPhoto').files[0];if(file){if(file.size>8000000)return alert("Фото завелике. Виберіть файл до 8 МБ.");f.photo=await new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}data.findings.push(f);if(!persist()){data.findings.pop();return;}['iRoom','iAir','iSurface','iHumidity','iDefect','iRecommendation','iPhoto'].forEach(x=>$(x).value='')}
-function pending(cid){const used=new Set(data.reports.flatMap(r=>r.findings));return data.findings.filter(f=>f.cid===cid&&!used.has(f.id))}
-function saveReport(){let cid=$('iClient').value;if(!cid)return alert('Обери клієнта');let fs=pending(cid);if(!fs.length)return alert('Додай хоча б один результат обстеження');let r={id:uid(),cid,type:fs[fs.length-1].type,findings:fs.map(f=>f.id),conclusion:$('iConclusion').value,expert:$('iExpert').value,date:new Date().toLocaleDateString('uk-UA')};r.client={...data.clients.find(c=>c.id===cid)};data.reports.unshift(r);if(persist()){ $("iConclusion").value="";alert("Обстеження збережено");tab("archive")}else data.reports.shift()}
-function makeReport(){let cid=$('iClient').value;if(!cid)return alert('Обери клієнта');let fs=pending(cid);if(!fs.length)return alert('Немає результатів для звіту');showReport(data.clients.find(x=>x.id===cid),fs,$("iConclusion").value,$("iExpert").value,new Date().toLocaleDateString("uk-UA"));}
-let currentPdf=null;
-function sharePdf(){if(!currentPdf)return alert('Спочатку сформуйте звіт');if(window.Native)Native.sharePdf(JSON.stringify(currentPdf));else alert('Доступно в Android');}
-function renderPdfs(){let box=$('pdfList');box.textContent='';try{let files=window.Native?JSON.parse(Native.listPdfs()):[];if(!files.length)box.textContent='Немає збережених PDF';for(let name of files){let row=document.createElement('div');row.className='item';let label=document.createElement('p');label.textContent=name;row.append(label);for(let share of [false,true]){let b=document.createElement('button');b.className='secondary';b.textContent=share?'Надіслати':'Відкрити';b.onclick=()=>Native.archivedPdf(name,share);row.append(b)}box.append(row)}}catch(e){box.textContent='Не вдалося прочитати архів PDF'}}
-
-function savePdf(){if(!currentPdf)return alert("Спочатку сформуйте звіт");if(window.Native)Native.savePdf(JSON.stringify(currentPdf));else alert("Доступно в Android");}
-function showReport(c,fs,conclusion,expert,date){currentPdf={c,fs,conclusion,expert,date};let body=fs.map((f,n)=>`<div class="card"><h3>${n+1}. ${esc(f.room||f.type)}</h3><p><b>Напрямок:</b> ${esc(f.type)}</p><p><b>Температура повітря:</b> ${esc(f.air||'не вказано')} °C &nbsp; <b>Поверхні:</b> ${esc(f.surface||'не вказано')} °C</p><p><b>Вологість:</b> ${esc(f.humidity||'не вказано')}%</p><p><b>Спостереження:</b> ${esc(f.defect||'Не зазначено')}</p><p><b>Рекомендації:</b> ${esc(f.recommendation||'Не зазначено')}</p>${f.photo?`<img class="photo" src="${f.photo}">`:''}</div>`).join('');
-$('reportContent').innerHTML=`<h2>ЗВІТ ТЕПЛОВІЗІЙНОГО ОБСТЕЖЕННЯ</h2><p><b>THERMO EXPERT VLADIMIR</b></p><p>Дата: ${esc(date)}</p><p><b>Замовник:</b> ${esc(c.name)}<br><b>Телефон:</b> ${esc(c.phone)}<br><b>Адреса об’єкта:</b> ${esc(c.address)}<br><b>Тип об’єкта:</b> ${esc(c.type)}</p><h3>Результати обстеження</h3>${body}<div class="card"><h3>Підсумковий висновок експерта</h3><p>${esc(conclusion||'Висновок не внесено').replace(/\n/g,'<br>')}</p><p><b>Виконавець:</b> ${esc(expert)}</p><p>Підпис: ____________________</p></div><p class="muted">Примітка: висновок формується за внесеними спостереженнями та потребує перевірки й затвердження відповідальним фахівцем.</p>`;
-tab('report')}
-function savePrices(){document.querySelectorAll('[data-price]').forEach((el,i)=>data.prices[i][1]=Math.max(0,+el.value));persist();alert('Прайс збережено')}
-function backup(){if(window.Native){Native.exportBackup(JSON.stringify(data,null,2));return;}let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='thermo-expert-backup.json';a.click();URL.revokeObjectURL(a.href)}
-function restore(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!["clients","orders","findings","reports","prices"].every(k=>Array.isArray(x[k])))throw 0;if(!confirm("Замінити поточні дані резервною копією?"))return;data={...data,...x};if(persist())alert('Резервну копію відновлено')}catch(e){alert('Не вдалося прочитати файл копії')}};r.readAsText(f)}
-function openArchived(i){let r=data.reports[i];if(!r)return;showReport(r.client||data.clients.find(c=>c.id===r.cid)||{name:"Клієнт видалений"},data.findings.filter(f=>r.findings.includes(f.id)),r.conclusion,r.expert,r.date)}
-function render(){ $('countClients').textContent=data.clients.length;$('countOrders').textContent=data.orders.length;$('countReports').textContent=data.reports.length;$('sumPaid').textContent=data.orders.reduce((s,o)=>s+(+o.paid||0),0).toLocaleString('uk-UA')+' ₴';
-let oc=$("oClient").value,ic=$("iClient").value;let opts=data.clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');$('oClient').innerHTML=opts||'<option value="">Спочатку створіть клієнта</option>';$('iClient').innerHTML=opts||'<option value="">Спочатку створіть клієнта</option>';
-if(data.clients.some(c=>c.id===oc))$('oClient').value=oc;if(data.clients.some(c=>c.id===ic))$('iClient').value=ic;
-$('archiveList').innerHTML=data.reports.map((r,i)=>`<div class="item"><b>${esc(r.client?.name||clientName(r.cid))}</b><p>${esc(r.date)} · ${esc(r.type)}</p><button class="secondary" onclick="openArchived(${i})">Перегляд звіту</button></div>`).join('')||'Архів порожній';
-$('clientList').innerHTML=data.clients.length?data.clients.map(c=>`<div class="item"><b>${esc(c.name)}</b><div class="muted">${esc(c.phone)} · ${esc(c.address)} · ${esc(c.type)}</div><div class="actions"><button class="danger" onclick="delClient('${c.id}')">Видалити</button></div></div>`).join(''):'Поки немає клієнтів';
-$('orderList').innerHTML=data.orders.length?data.orders.map(o=>`<div class="item"><b>${esc(clientName(o.cid))}</b><div>${esc(o.service)} · ${o.total.toFixed(2)} грн</div><div class="muted">${o.date} · ${esc(o.status)} · оплачено ${o.paid} грн · залишок ${(o.total-o.paid).toFixed(2)} грн</div></div>`).join(''):'Замовлень ще немає';
-$('findingList').innerHTML=pending($("iClient").value).length?pending($("iClient").value).slice().reverse().map(f=>`<div class="item"><b>${esc(clientName(f.cid))} — ${esc(f.room||f.type)}</b><div class="muted">${esc(f.type)} · ${f.date}</div><p>${esc(f.defect)}</p>${f.photo?`<img class="photo" src="${f.photo}">`:''}</div>`).join(''):'Ще немає доданих результатів';
-$('priceList').innerHTML=data.prices.map((p,i)=>`<div class="item"><label>${esc(p[0])}, грн</label><input data-price="${i}" type="number" min="0" value="${p[1]}"></div>`).join('');
-}
-function delClient(id){if(confirm('Видалити клієнта? Пов’язані записи залишаться в історії.')){data.clients=data.clients.filter(c=>c.id!==id);persist()}}
-$('iClient').addEventListener('change',render);
-$('oService').addEventListener('change',()=>{let p=data.prices.find(p=>p[0]===$('oService').value);if(p)$('oPrice').value=p[1];calcOrder()});
-load();render();$('oService').dispatchEvent(new Event('change'));
-if('serviceWorker'in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-</script></body></html>
+<section id="settings" class="panel">
+  <h2>Параметри</h2>
+  <div class="card">
+    <h3>Резервні копії</h3>
+    <div class="actions">
+      <button class="secondary" onclick="backup()">Експорт резервної копії</button>
+      <button class="secondary" onclick="exportDailyBackup()">Експорт останньої автоматичної копії</button>
+    </div>
+    <label for="restoreFile">Імпорт резервної копії</label>
+    <input id="restoreFile" type="file" accept=".json,application/json" onchange="restore(event)">
+  </div>
+  <button class="secondary" onclick="tab('prices')">Прайс</button>
+</section>
+<section id="catalog" class="panel">
+  <h2>Каталог</h2>
+  <div class="card catalog-actions">
+    <button class="primary" onclick="tab('clients')">Клієнти</button>
+    <button class="primary" onclick="tab('orders')">Замовлення</button>
+    <button class="primary" onclick="tab('prices')">Прайс</button>
+  </div>
+</section>
+<section id="info" class="panel">
+  <h2>Про програму</h2>
+  <div class="card">
+    <h3>THERMO EXPERT VLADIMIR</h3>
+    <p>Professional Expert 1.2.0</p>
+    <p>Тепловізійні обстеження, облік клієнтів і замовлень, формування звітів та енергоаудит.</p>
+  </div>
+</section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

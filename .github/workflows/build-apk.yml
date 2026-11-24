@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, professional-expert-1.2.0]
   pull_request:
     branches: [main]
 
@@ -11,7 +11,77 @@ permissions:
   contents: read
 
 jobs:
+  professional:
+    if: github.ref == 'refs/heads/professional-expert-1.2.0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build 1.2.0 and Android tests
+        run: gradle --no-daemon assembleDebug assembleDebugAndroidTest
+      - name: Build unchanged 1.1.5 for the upgrade test
+        run: |
+          baseline=$(mktemp -d)
+          git archive 9b54b1c217b44a0652954d0ac6f3081815af904a | tar -x -C "$baseline"
+          gradle --no-daemon -p "$baseline" assembleDebug
+          cp "$baseline/app/build/outputs/apk/debug/app-debug.apk" baseline-app.apk
+      - name: Verify installable APK
+        run: |
+          apk=app/build/outputs/apk/debug/app-debug.apk
+          tools="$ANDROID_HOME/build-tools/35.0.0"
+          "$tools/apksigner" verify --verbose --print-certs "$apk"
+          "$tools/aapt2" dump badging "$apk" > apk-badging.txt
+          grep -F "package: name='ua.thermoexpert.vladimir' versionCode='9' versionName='1.2.0'" apk-badging.txt
+          unzip -t "$apk"
+          cp "$apk" THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert.apk
+          sha256sum THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Enable KVM and install PDF inspection tools
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          command -v pdftotext || (sudo apt-get update && sudo apt-get install -y poppler-utils)
+      - name: Test fresh install, upgrade, PDF and backups on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash .github/scripts/test-professional-apk.sh
+      - name: Upload verified APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert
+          path: |
+            THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert.apk
+            SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Upload Android test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: professional-expert-android-tests
+          path: android-test-results/
+          if-no-files-found: ignore
+
   build:
+    if: github.ref != 'refs/heads/professional-expert-1.2.0'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

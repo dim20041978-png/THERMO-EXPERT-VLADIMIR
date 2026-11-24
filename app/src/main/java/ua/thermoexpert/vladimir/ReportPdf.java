@@ -18,17 +18,46 @@ final class ReportPdf implements AutoCloseable {
         if(page!=null)doc.finishPage(page);
         page=doc.startPage(new PdfDocument.PageInfo.Builder(595,842,++number).create());
         y=40;
-        paint.setColor(Color.DKGRAY);paint.setTextSize(10);paint.setTypeface(Typeface.DEFAULT);
-        page.getCanvas().drawText("THERMO EXPERT VLADIMIR  •  "+number,40,815,paint);
+        Paint footer = new Paint(Paint.ANTI_ALIAS_FLAG);
+        footer.setColor(Color.DKGRAY);
+        footer.setTextSize(10);
+        page.getCanvas().drawText("THERMO EXPERT VLADIMIR  •  " + number, 40, 815, footer);
     }
-    private void text(String value, boolean bold){
-        paint.setColor(Color.BLACK);paint.setTextSize(bold?15:12);paint.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);
-        StaticLayout layout=StaticLayout.Builder.obtain(value,0,value.length(),paint,515).setIncludePad(false).build();
-        for(int i=0;i<layout.getLineCount();i++){
-            int h=layout.getLineBottom(i)-layout.getLineTop(i);
-            if(y+h>790){next();paint.setColor(Color.BLACK);paint.setTextSize(bold?15:12);paint.setTypeface(bold?Typeface.DEFAULT_BOLD:Typeface.DEFAULT);}
-            Canvas canvas=page.getCanvas();canvas.save();canvas.clipRect(40,y,555,y+h);canvas.translate(40,y-layout.getLineTop(i));layout.draw(canvas);canvas.restore();y+=h;
-        } y+=7;
+
+    private StaticLayout layout(String value, int start, int end) {
+        return StaticLayout.Builder.obtain(value, start, end, paint, 515).setIncludePad(false).build();
+    }
+
+    private void text(String value, boolean bold) {
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(bold ? 15 : 12);
+        paint.setTypeface(bold ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+        StaticLayout block = layout(value, 0, value.length());
+        int line = 0;
+        while (line < block.getLineCount()) {
+            int top = block.getLineTop(line);
+            int end = line;
+            while (end < block.getLineCount() && y + block.getLineBottom(end) - top <= 790) {
+                end++;
+            }
+            if (end == line) {
+                next();
+                continue;
+            }
+            int startIndex = block.getLineStart(line);
+            int endIndex = block.getLineEnd(end - 1);
+            if (end < block.getLineCount() && endIndex > startIndex && value.charAt(endIndex - 1) == '\n') {
+                endIndex--;
+            }
+            Canvas canvas = page.getCanvas();
+            canvas.save();
+            canvas.translate(40, y);
+            (line == 0 && end == block.getLineCount() ? block : layout(value, startIndex, endIndex)).draw(canvas);
+            canvas.restore();
+            y += block.getLineBottom(end - 1) - top;
+            line = end;
+        }
+        y += 7;
     }
     private void photo(String value){
         if(!value.startsWith("data:image/"))return;
@@ -49,7 +78,7 @@ final class ReportPdf implements AutoCloseable {
         try(ReportPdf p=new ReportPdf()){
             p.next();p.text("ЗВІТ ТЕПЛОВІЗІЙНОГО ОБСТЕЖЕННЯ",true);p.text("THERMO EXPERT VLADIMIR",true);p.text("Дата: "+r.optString("date"),false);
             p.text("Замовник: "+c.optString("name")+"\nТелефон: "+c.optString("phone")+"\nАдреса: "+c.optString("address")+"\nТип об’єкта: "+c.optString("type"),false);
-            for(int i=0;i<fs.length();i++){JSONObject f=fs.getJSONObject(i);p.text((i+1)+". "+f.optString("room",f.optString("type")),true);p.text("Напрямок: "+f.optString("type")+"\nТемпература повітря: "+f.optString("air")+" °C\nТемпература поверхні: "+f.optString("surface")+" °C\nВологість: "+f.optString("humidity")+" %\nСпостереження: "+f.optString("defect")+"\nРекомендації: "+f.optString("recommendation"),false);p.photo(f.optString("photo"));}
+            for(int i=0;i<fs.length();i++){JSONObject f=fs.getJSONObject(i);String room=f.optString("room");p.text((i+1)+". "+(room.isEmpty()?f.optString("type"):room),true);p.text("Напрямок: "+f.optString("type")+"\nТемпература повітря: "+f.optString("air")+" °C\nТемпература поверхні: "+f.optString("surface")+" °C\nВологість: "+f.optString("humidity")+" %\nСпостереження: "+f.optString("defect")+"\nРекомендації: "+f.optString("recommendation"),false);p.photo(f.optString("photo"));}
             p.text("Підсумковий висновок експерта",true);p.text(r.optString("conclusion")+"\nВиконавець: "+r.optString("expert")+"\nПідпис: ____________________",false);p.text("Висновок потребує перевірки й затвердження відповідальним фахівцем.",false);
             p.doc.finishPage(p.page);p.page=null;try(FileOutputStream out=new FileOutputStream(tmp)){p.doc.writeTo(out);out.getFD().sync();}if(!tmp.renameTo(file))throw new IOException("Не вдалося зберегти архів");
         }finally{tmp.delete();}
