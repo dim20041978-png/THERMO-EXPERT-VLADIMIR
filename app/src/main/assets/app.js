@@ -84,6 +84,7 @@ function photoMarkup(photo) {
 
 function showScreen() {
   const screen = screens[screens.length - 1];
+  document.body.classList.toggle('home-screen', screen === 'home');
   document.querySelectorAll('.panel').forEach(panel => {
     panel.classList.toggle('active', panel.id === screen);
   });

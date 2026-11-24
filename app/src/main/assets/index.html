@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="professional.css">
 <title>THERMO EXPERT VLADIMIR</title>
 </head>
-<body>
+<body class="home-screen">
 <header class="app-header">
   <button id="backButton" class="back-button" type="button" aria-label="Назад" hidden>‹</button>
   <div class="brand">
@@ -15,26 +15,29 @@
   </div>
 </header>
 <nav class="no-print" aria-label="Основна навігація">
-  <button data-tab="home" class="active" aria-current="page"><img src="art/home.png" alt="">Головна</button>
-  <button data-tab="catalog"><img src="art/catalog.png" alt="">Каталог</button>
-  <button data-tab="archive"><img src="art/reports.png" alt="">Архів звітів</button>
-  <button data-tab="info"><img src="art/info.png" alt="">Інфо</button>
+  <div class="mockup-nav-art" aria-hidden="true"><img src="art/mockup-2.webp" alt=""></div>
+  <button data-tab="home" class="active" aria-current="page"><img src="art/home.png" alt=""><span>Головна</span></button>
+  <button data-tab="catalog"><img src="art/catalog.png" alt=""><span>Каталог</span></button>
+  <button data-tab="archive"><img src="art/reports.png" alt=""><span>Архів звітів</span></button>
+  <button data-tab="info"><img src="art/info.png" alt=""><span>Інфо</span></button>
 </nav>
 <main>
 <section id="home" class="panel active">
-<div class="hero">
-  <h1>Тепловізійні<br>обстеження</h1>
-  <small>Енергоаудит та звіти</small>
-</div>
-<div class="grid service-grid" aria-label="Напрями обстежень і функції">
-  <button class="tile" data-inspection="Будинок / тепловтрати"><img src="art/home.png" alt="">Обстеження будинку</button>
-  <button class="tile" data-inspection="Електропроводка"><img src="art/power.png" alt="">Діагностика електрики</button>
-  <button class="tile" data-inspection="Тепла підлога"><img src="art/floor.png" alt="">Тепла підлога</button>
-  <button class="tile" data-inspection="Система опалення"><img src="art/heating.png" alt="">Система опалення</button>
-  <button class="tile" data-inspection="Інженерні системи"><img src="art/water.png" alt="">Інженерні системи</button>
-  <button class="tile" data-inspection="Енергоаудит"><img src="art/audit.png" alt="">Енергоаудит та рекомендації</button>
-  <button class="tile" onclick="tab('archive')"><img src="art/reports.png" alt="">Звіти (акти, PDF)</button>
-  <button class="tile" onclick="tab('settings')"><img src="art/settings.png" alt="">Параметри</button>
+<div class="mockup-home">
+  <img class="mockup-home-art" src="art/mockup-2.webp" alt="" aria-hidden="true">
+  <h1 class="visually-hidden mockup-title">THERMO EXPERT VLADIMIR</h1>
+  <span class="mockup-version">1.2.0</span>
+  <p class="visually-hidden">Тепловізійна діагностика · Енергоефективність · Звіти</p>
+  <div class="service-grid" role="group" aria-label="Напрями обстежень і функції">
+    <button class="tile" data-inspection="Будинок / тепловтрати"><span class="visually-hidden">Обстеження будинку</span></button>
+    <button class="tile" data-inspection="Електропроводка"><span class="visually-hidden">Діагностика електрики</span></button>
+    <button class="tile" data-inspection="Тепла підлога"><span class="visually-hidden">Тепла підлога</span></button>
+    <button class="tile" data-inspection="Система опалення"><span class="visually-hidden">Система опалення</span></button>
+    <button class="tile" data-inspection="Інженерні системи"><span class="visually-hidden">Інженерні системи (труби, витоки)</span></button>
+    <button class="tile" data-inspection="Енергоаудит"><span class="visually-hidden">Енергоаудит та рекомендації</span></button>
+    <button class="tile" onclick="tab('archive')"><span class="visually-hidden">Звіти (акти, PDF)</span></button>
+    <button class="tile" onclick="tab('settings')"><span class="visually-hidden">Параметри та налаштування</span></button>
+  </div>
 </div>
 <h2 class="workspace-heading">Робочий кабінет</h2>
 <div class="grid stats">

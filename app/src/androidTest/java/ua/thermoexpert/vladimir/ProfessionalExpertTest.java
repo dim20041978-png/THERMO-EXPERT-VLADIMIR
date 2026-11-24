@@ -37,7 +37,12 @@ public class ProfessionalExpertTest {
             ((android.view.ViewGroup) activity.<android.view.ViewGroup>findViewById(android.R.id.content).getChildAt(0)).getChildAt(0));
         try {
             await("document.readyState === 'complete' && typeof goBack === 'function'");
-            assertJs("document.images.length >= 12 && Array.from(document.images).every(i => i.naturalWidth > 0)");
+            await("document.querySelector('.mockup-home-art').naturalWidth === 1024"
+                + " && document.querySelector('.mockup-nav-art img').naturalHeight === 1536");
+            assertJs("document.body.classList.contains('home-screen')"
+                + " && $('home').querySelector('.mockup-version').textContent === '1.2.0'"
+                + " && $('home').querySelectorAll('.tile').length === 8");
+            saveScreenshot("home-test.png");
             js("window.messages = []; window.alert = message => messages.push(message); window.confirm = () => true");
             assertJs("data.clients[0].name === 'Клієнт 1.1.5' && data.orders[0].total === 550"
                 + " && data.reports[0].id === 'legacy-report' && data.prices[0][1] === 550");
@@ -129,11 +134,15 @@ public class ProfessionalExpertTest {
             await("data.clients.length === 2 && messages.at(-1) === 'Резервну копію відновлено'");
             click("nav [data-tab=archive]");
             assertJs("$('archiveList').textContent.includes('Новий клієнт') && $('pdfList').textContent.includes('.pdf')");
-            try (java.io.OutputStream screenshot = activity.openFileOutput("archive-test.png", 0)) {
-                instrumentation.getUiAutomation().takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, screenshot);
-            }
+            saveScreenshot("archive-test.png");
         } finally {
             instrumentation.runOnMainSync(activity::finish);
+        }
+    }
+
+    private void saveScreenshot(String name) throws Exception {
+        try (java.io.OutputStream screenshot = activity.openFileOutput(name, 0)) {
+            instrumentation.getUiAutomation().takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, screenshot);
         }
     }
 

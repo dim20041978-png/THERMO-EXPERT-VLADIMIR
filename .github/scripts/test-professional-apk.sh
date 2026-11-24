@@ -60,3 +60,4 @@ grep -F 'Висновок 1.1.5' "$output/report.txt"
 test "$(grep -Fc 'Висновок 1.1.5' "$output/report.txt")" -eq 1
 adb shell "ls '/sdcard/Download/THERMO EXPERT/$name'"
 adb exec-out run-as "$package" cat files/archive-test.png > "$output/archive.png"
+adb exec-out run-as "$package" cat files/home-test.png > "$output/home.png"
