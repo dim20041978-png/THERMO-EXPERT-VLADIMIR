@@ -24,9 +24,9 @@
 <main>
 <section id="home" class="panel active">
 <div class="mockup-home">
-  <img class="mockup-home-art" src="art/mockup-2.webp" alt="" aria-hidden="true">
+  <img class="mockup-home-art" src="art/home-compact.webp" alt="" aria-hidden="true">
   <h1 class="visually-hidden mockup-title">THERMO EXPERT VLADIMIR</h1>
-  <span class="mockup-version">1.2.0</span>
+  <span class="mockup-version">1.2.1</span>
   <p class="visually-hidden">Тепловізійна діагностика · Енергоефективність · Звіти</p>
   <div class="service-grid" role="group" aria-label="Напрями обстежень і функції">
     <button class="tile" data-inspection="Будинок / тепловтрати"><span class="visually-hidden">Обстеження будинку</span></button>
@@ -41,8 +41,8 @@
 </div>
 <h2 class="workspace-heading">Робочий кабінет</h2>
 <div class="grid stats">
-<div class="stat"><strong id="countClients">0</strong><span>Клієнтів</span></div><div class="stat"><strong id="countOrders">0</strong><span>Замовлень</span></div>
-<div class="stat"><strong id="countReports">0</strong><span>Обстежень</span></div><div class="stat"><strong id="sumPaid">0 ₴</strong><span>Отримано оплат</span></div></div>
+<button type="button" class="stat" onclick="tab('clients')"><span class="stat-icon" aria-hidden="true">♟</span><strong id="countClients">0</strong><span>Клієнтів</span></button><button type="button" class="stat" onclick="tab('orders')"><span class="stat-icon" aria-hidden="true">▤</span><strong id="countOrders">0</strong><span>Замовлень</span></button>
+<button type="button" class="stat" onclick="tab('archive')"><span class="stat-icon" aria-hidden="true">▣</span><strong id="countReports">0</strong><span>Обстежень</span></button><button type="button" class="stat" onclick="tab('orders')"><span class="stat-icon" aria-hidden="true">₴</span><strong id="sumPaid">0 ₴</strong><span>Отримано оплат</span></button></div>
 <div class="card"><h3>Швидкий початок</h3><p class="muted">Створи клієнта, додай замовлення, зафіксуй результати обстеження та сформуй PDF-звіт.</p><div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button><button class="secondary" onclick="tab('inspection')">Нове обстеження</button></div></div>
 <div class="card"><h3>Збереження даних</h3><p class="muted">Дані зберігаються у внутрішньому сховищі програми. Автоматична копія створюється раз на день під час користування програмою. Експортуйте копії для захисту від видалення програми.</p><div class="actions"><button class="secondary" onclick="backup()">Експорт резервної копії</button><button class="secondary" onclick="exportDailyBackup()">Експорт останньої автоматичної копії</button><label class="secondary import-button">Імпорт копії<input type="file" accept=".json,application/json" aria-label="Імпорт резервної копії" onchange="restore(event)"></label></div></div>
 </section>
@@ -106,7 +106,7 @@
   <h2>Про програму</h2>
   <div class="card">
     <h3>THERMO EXPERT VLADIMIR</h3>
-    <p>Professional Expert 1.2.0</p>
+    <p>Professional Expert 1.2.1</p>
     <p>Тепловізійні обстеження, облік клієнтів і замовлень, формування звітів та енергоаудит.</p>
   </div>
 </section>

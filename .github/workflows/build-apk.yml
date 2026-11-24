@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, professional-expert-1.2.0]
+    branches: [main, release/1.2.1]
   pull_request:
     branches: [main]
 
@@ -11,10 +11,12 @@ permissions:
   contents: read
 
 jobs:
-  professional:
-    if: github.ref == 'refs/heads/professional-expert-1.2.0'
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,32 +33,37 @@ jobs:
           gradle-version: '8.9'
       - name: Install Android SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Build 1.2.0 and Android tests
+      - name: Build 1.2.1 and Android tests
         run: gradle --no-daemon assembleDebug assembleDebugAndroidTest
-      - name: Build unchanged 1.1.5 for the upgrade test
+      - name: Build the previous versions for upgrade tests
         run: |
-          baseline=$(mktemp -d)
-          git archive 9b54b1c217b44a0652954d0ac6f3081815af904a | tar -x -C "$baseline"
-          gradle --no-daemon -p "$baseline" assembleDebug
-          cp "$baseline/app/build/outputs/apk/debug/app-debug.apk" baseline-app.apk
-      - name: Verify installable APK
+          for version in 1.1.5 1.2.0; do
+            case "$version" in
+              1.1.5) revision=9b54b1c217b44a0652954d0ac6f3081815af904a ;;
+              1.2.0) revision=79c50935a57577792ada60917622f73454df2b40 ;;
+            esac
+            baseline=$(mktemp -d)
+            git archive "$revision" | tar -x -C "$baseline"
+            gradle --no-daemon -p "$baseline" assembleDebug
+            cp "$baseline/app/build/outputs/apk/debug/app-debug.apk" "baseline-app-$version.apk"
+          done
+      - name: Verify APK signature and manifest
         run: |
           apk=app/build/outputs/apk/debug/app-debug.apk
           tools="$ANDROID_HOME/build-tools/35.0.0"
-          "$tools/apksigner" verify --verbose --print-certs "$apk"
+          "$tools/apksigner" verify --verbose --print-certs "$apk" | tee apk-signature.txt
           "$tools/aapt2" dump badging "$apk" > apk-badging.txt
-          grep -F "package: name='ua.thermoexpert.vladimir' versionCode='9' versionName='1.2.0'" apk-badging.txt
+          grep -F "package: name='ua.thermoexpert.vladimir' versionCode='12' versionName='1.2.1'" apk-badging.txt
           unzip -t "$apk"
-          cp "$apk" THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert.apk
-          sha256sum THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert.apk > SHA256SUMS.txt
-          cat SHA256SUMS.txt
+          cp "$apk" THERMO-EXPERT-VLADIMIR-1.2.1-debug.apk
+          sha256sum THERMO-EXPERT-VLADIMIR-1.2.1-debug.apk > SHA256SUMS.txt
       - name: Enable KVM and install PDF inspection tools
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
           command -v pdftotext || (sudo apt-get update && sudo apt-get install -y poppler-utils)
-      - name: Test fresh install, upgrade, PDF and backups on Android 15
+      - name: Test installation, upgrades, PDF and backups on Android 15
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -67,10 +74,11 @@ jobs:
       - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert
+          name: THERMO-EXPERT-VLADIMIR-1.2.1-debug
           path: |
-            THERMO-EXPERT-VLADIMIR-1.2.0-Professional-Expert.apk
+            THERMO-EXPERT-VLADIMIR-1.2.1-debug.apk
             SHA256SUMS.txt
+            apk-signature.txt
           if-no-files-found: error
       - name: Upload Android test output
         if: always()
@@ -79,53 +87,3 @@ jobs:
           name: professional-expert-android-tests
           path: android-test-results/
           if-no-files-found: ignore
-
-  build:
-    if: github.ref != 'refs/heads/professional-expert-1.2.0'
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: android-actions/setup-android@v3
-        with:
-          packages: ''
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-      - name: Install Android platform and build tools
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
-      - name: Verify APK signature and manifest
-        run: |
-          apk=app/build/outputs/apk/debug/app-debug.apk
-          tools="$ANDROID_HOME/build-tools/35.0.0"
-          "$tools/apksigner" verify --verbose --print-certs "$apk"
-          "$tools/aapt2" dump badging "$apk" > apk-badging.txt
-          cat apk-badging.txt
-          grep -F "package: name='ua.thermoexpert.vladimir'" apk-badging.txt
-          unzip -t "$apk"
-          sha256sum "$apk"
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: THERMO-EXPERT-VLADIMIR-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-      - name: Enable KVM for the Android emulator
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: Install and launch APK on Android 15
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          disable-animations: true
-          script: bash .github/scripts/smoke-test-apk.sh

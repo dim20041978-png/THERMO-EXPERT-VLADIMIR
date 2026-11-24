@@ -39,15 +39,21 @@ public class ProfessionalExpertTest {
         try {
             await("document.readyState === 'complete' && typeof goBack === 'function'");
             await("document.querySelector('.mockup-home-art').naturalWidth === 1024"
+                + " && document.querySelector('.mockup-home-art').naturalHeight === 1231"
                 + " && document.querySelector('.mockup-nav-art img').naturalHeight === 1536");
             assertJs("document.body.classList.contains('home-screen')"
-                + " && $('home').querySelector('.mockup-version').textContent === '1.2.0'"
+                + " && $('home').querySelector('.mockup-version').textContent === '1.2.1'"
                 + " && $('home').querySelectorAll('.tile').length === 8");
             saveScreenshot("home-test.png", true);
             js("window.messages = []; window.alert = message => messages.push(message); window.confirm = () => true");
             assertJs("data.clients[0].name === 'Клієнт 1.1.5' && data.orders[0].total === 550"
                 + " && data.reports[0].id === 'legacy-report' && data.prices[0][1] === 550");
             assertJs("data.findings[0].photo.startsWith('data:image/png;base64,')");
+            assertJs("$('countClients').textContent === '1' && $('countOrders').textContent === '1'"
+                + " && $('countReports').textContent === '1' && $('sumPaid').textContent === '400 ₴'");
+            assertJs("['clients', 'orders', 'archive', 'orders'].every((panel, index) => {"
+                + " const button = $('home').querySelectorAll('.stat')[index]; button.click();"
+                + " const opened = $(panel).classList.contains('active'); goBack(); return opened; })");
             assertJs("[...document.querySelectorAll('[data-inspection]')].length === 6");
             assertJs("[...document.querySelectorAll('[data-inspection]')].every(button => {"
                 + " button.click(); const ok = document.querySelector('.panel.active').id === 'inspection'"
@@ -63,7 +69,7 @@ public class ProfessionalExpertTest {
             instrumentation.runOnMainSync(activity::onBackPressed);
             await("document.querySelector('.panel.active').id === 'settings'");
             click("nav [data-tab=info]");
-            assertJs("$('info').classList.contains('active') && $('info').textContent.includes('1.2.0')");
+            assertJs("$('info').classList.contains('active') && $('info').textContent.includes('1.2.1')");
 
             click("nav [data-tab=catalog]");
             click("#catalog button:first-child");
