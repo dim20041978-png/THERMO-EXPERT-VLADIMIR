@@ -4,6 +4,42 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#092443">
 <link rel="stylesheet" href="professional.css">
+<style>
+/* Six live navigation targets replace the old four-button raster strip. */
+@media screen {
+nav.six-tab-nav, .home-screen nav.six-tab-nav {
+  inset: auto 0 calc(5px + env(safe-area-inset-bottom, 0px));
+  width: calc(100% - 10px); max-width: 630px; min-height: 62px;
+  aspect-ratio: auto; margin: 0 auto; padding: 4px 2px;
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0;
+  border: 1px solid #83cfff; border-radius: 17px;
+  background: linear-gradient(165deg,#1678ad 0%,#0d3c68 37%,#061a35 84%);
+  box-shadow: inset 0 1px 4px #bde9ff, 0 3px 8px #0c2b4966;
+}
+nav.six-tab-nav button, .home-screen nav.six-tab-nav button {
+  width: 100%; min-width: 0; max-width: none; min-height: 52px;
+  margin: 0; padding: 3px 0; gap: 3px; border: 0;
+  color: #edf8ff; font-size: clamp(9px, 2.65vw, 13px);
+  font-weight: 650; line-height: 1.15; background: transparent;
+}
+nav.six-tab-nav button:not(:first-child) {border-left: 1px solid #a5d9ff55;}
+nav.six-tab-nav button > img, .home-screen nav.six-tab-nav button > img,
+nav.six-tab-nav svg {display: block; width: 24px; height: 24px; object-fit: contain;}
+nav.six-tab-nav button.active, .home-screen nav.six-tab-nav button.active {
+  color: var(--gold); background: radial-gradient(ellipse at 50% 100%, #f4c54645, transparent 70%);
+  text-shadow: 0 0 7px #ffdb6966;
+}
+nav.six-tab-nav button.active > img {filter: drop-shadow(0 0 3px #ffda69);}
+nav.six-tab-nav button:focus-visible {outline: 2px solid var(--gold); outline-offset: -2px;}
+nav.six-tab-nav button:active, .home-screen nav.six-tab-nav button:active {background:#ffffff32;}
+main, .home-screen main {padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));}
+}
+@media screen and (forced-colors: active) {
+nav.six-tab-nav, .home-screen nav.six-tab-nav {background:Canvas; border-color:CanvasText;}
+nav.six-tab-nav button, .home-screen nav.six-tab-nav button {color:ButtonText; background:ButtonFace; border:1px solid ButtonText;}
+nav.six-tab-nav button.active, .home-screen nav.six-tab-nav button.active {color:HighlightText; background:Highlight;}
+}
+</style>
 <title>THERMO EXPERT VLADIMIR</title>
 </head>
 <body class="home-screen">
@@ -14,11 +50,12 @@
     <div><b>THERMO EXPERT VLADIMIR</b><small>Professional Expert</small></div>
   </div>
 </header>
-<nav class="no-print" aria-label="Основна навігація">
-  <div class="mockup-nav-art" aria-hidden="true"><img src="art/mockup-2.webp" alt=""></div>
+<nav class="no-print six-tab-nav" aria-label="Основна навігація">
   <button data-tab="home" class="active" aria-current="page"><img src="art/home.png" alt=""><span>Головна</span></button>
   <button data-tab="catalog"><img src="art/catalog.png" alt=""><span>Каталог</span></button>
-  <button data-tab="archive"><img src="art/reports.png" alt=""><span>Архів звітів</span></button>
+  <button data-tab="workspace" aria-label="Робочий кабінет"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18M10 13v2h4v-2"/></svg><span>Кабінет</span></button>
+  <button data-tab="archive" aria-label="Архів звітів"><img src="art/reports.png" alt=""><span>Архів</span></button>
+  <button data-tab="data" aria-label="Збереження даних"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></svg><span>Дані</span></button>
   <button data-tab="info"><img src="art/info.png" alt=""><span>Інфо</span></button>
 </nav>
 <main>
@@ -39,11 +76,15 @@
     <button class="tile" onclick="tab('settings')"><span class="visually-hidden">Параметри та налаштування</span></button>
   </div>
 </div>
+<div class="card"><h3>Швидкий початок</h3><p class="muted">Створи клієнта, додай замовлення, зафіксуй результати обстеження та сформуй PDF-звіт.</p><div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button><button class="secondary" onclick="tab('inspection')">Нове обстеження</button></div></div>
+</section>
+<section id="workspace" class="panel" aria-label="Робочий кабінет">
 <h2 class="workspace-heading">Робочий кабінет</h2>
 <div class="grid stats">
 <button type="button" class="stat" onclick="tab('clients')"><span class="stat-icon" aria-hidden="true">♟</span><strong id="countClients">0</strong><span>Клієнтів</span></button><button type="button" class="stat" onclick="tab('orders')"><span class="stat-icon" aria-hidden="true">▤</span><strong id="countOrders">0</strong><span>Замовлень</span></button>
 <button type="button" class="stat" onclick="tab('archive')"><span class="stat-icon" aria-hidden="true">▣</span><strong id="countReports">0</strong><span>Обстежень</span></button><button type="button" class="stat" onclick="tab('orders')"><span class="stat-icon" aria-hidden="true">₴</span><strong id="sumPaid">0 ₴</strong><span>Отримано оплат</span></button></div>
-<div class="card"><h3>Швидкий початок</h3><p class="muted">Створи клієнта, додай замовлення, зафіксуй результати обстеження та сформуй PDF-звіт.</p><div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button><button class="secondary" onclick="tab('inspection')">Нове обстеження</button></div></div>
+</section>
+<section id="data" class="panel" aria-label="Збереження даних">
 <div class="card"><h3>Збереження даних</h3><p class="muted">Дані зберігаються у внутрішньому сховищі програми. Автоматична копія створюється раз на день під час користування програмою. Експортуйте копії для захисту від видалення програми.</p><div class="actions"><button class="secondary" onclick="backup()">Експорт резервної копії</button><button class="secondary" onclick="exportDailyBackup()">Експорт останньої автоматичної копії</button><label class="secondary import-button">Імпорт копії<input type="file" accept=".json,application/json" aria-label="Імпорт резервної копії" onchange="restore(event)"></label></div></div>
 </section>
 <section id="clients" class="panel">
