@@ -40,10 +40,16 @@ public class ProfessionalExpertTest {
             await("document.readyState === 'complete' && typeof goBack === 'function'");
             await("document.querySelector('.mockup-home-art').naturalWidth === 1024"
                 + " && document.querySelector('.mockup-home-art').naturalHeight === 1231"
-                + " && document.querySelector('.mockup-nav-art img').naturalHeight === 1536");
+                + " && [...document.querySelectorAll('nav button img')].every(img => img.complete && img.naturalWidth > 0)");
             assertJs("document.body.classList.contains('home-screen')"
                 + " && $('home').querySelector('.mockup-version').textContent === '1.2.1'"
-                + " && $('home').querySelectorAll('.tile').length === 8");
+                + " && $('home').querySelectorAll('.tile').length === 8"
+                + " && $('home').textContent.includes('Швидкий початок')"
+                + " && !$('home').querySelector('.stats') && !$('home').querySelector('[onclick=\"backup()\"]')");
+            assertJs("[...document.querySelectorAll('nav button')].map(b=>b.dataset.tab).join(',') === 'home,catalog,workspace,archive,data,info'"
+                + " && [...document.querySelectorAll('nav button')].every(b=>b.getBoundingClientRect().width >= 44"
+                + " && b.getBoundingClientRect().height >= 44 && b.getBoundingClientRect().right <= innerWidth)"
+                + " && document.querySelector('nav [aria-current=page]').dataset.tab === 'home'");
             saveScreenshot("home-test.png", true);
             js("window.messages = []; window.alert = message => messages.push(message); window.confirm = () => true");
             assertJs("data.clients[0].name === 'Клієнт 1.1.5' && data.orders[0].total === 550"
@@ -51,9 +57,27 @@ public class ProfessionalExpertTest {
             assertJs("data.findings[0].photo.startsWith('data:image/png;base64,')");
             assertJs("$('countClients').textContent === '1' && $('countOrders').textContent === '1'"
                 + " && $('countReports').textContent === '1' && $('sumPaid').textContent === '400 ₴'");
+            click("nav [data-tab=workspace]");
+            assertJs("$('workspace').classList.contains('active') && $('workspace').querySelectorAll('.stat').length === 4"
+                + " && document.querySelector('nav [aria-current=page]').dataset.tab === 'workspace'");
             assertJs("['clients', 'orders', 'archive', 'orders'].every((panel, index) => {"
-                + " const button = $('home').querySelectorAll('.stat')[index]; button.click();"
-                + " const opened = $(panel).classList.contains('active'); goBack(); return opened; })");
+                + " const button = $('workspace').querySelectorAll('.stat')[index]; button.click();"
+                + " const opened = $(panel).classList.contains('active'); goBack();"
+                + " return opened && $('workspace').classList.contains('active'); })");
+            saveScreenshot("workspace-test.png", false);
+            click("nav [data-tab=data]");
+            assertJs("$('data').classList.contains('active') && $('data').querySelectorAll('.actions button').length === 2"
+                + " && $('data').querySelector('input[type=file]') !== null"
+                + " && document.querySelector('nav [aria-current=page]').dataset.tab === 'data'");
+            saveScreenshot("data-test.png", false);
+            click("#backButton");
+            assertJs("$('home').classList.contains('active')");
+            click("#home .card .primary");
+            assertJs("$('clients').classList.contains('active')");
+            click("#backButton");
+            click("#home .card .secondary");
+            assertJs("$('inspection').classList.contains('active')");
+            click("#backButton");
             assertJs("[...document.querySelectorAll('[data-inspection]')].length === 6");
             assertJs("[...document.querySelectorAll('[data-inspection]')].every(button => {"
                 + " button.click(); const ok = document.querySelector('.panel.active').id === 'inspection'"
@@ -117,10 +141,9 @@ public class ProfessionalExpertTest {
             click("#archive .section-heading button");
             assertJs("$('pdfList').querySelectorAll('button').length === 2");
 
-            click("nav [data-tab=home]");
-            click("#home .tile:last-child");
-            JSONObject manual = exportBackup("#settings .actions button:first-child");
-            JSONObject daily = exportBackup("#settings .actions button:nth-child(2)");
+            click("nav [data-tab=data]");
+            JSONObject manual = exportBackup("#data .actions button:first-child");
+            JSONObject daily = exportBackup("#data .actions button:nth-child(2)");
             assertEquals(manual.toString(), daily.toString());
             assertEquals(2, daily.getJSONArray("clients").length());
             assertTrue(daily.getJSONArray("findings").getJSONObject(1).getString("photo").startsWith("data:image/png;base64,"));
@@ -132,12 +155,12 @@ public class ProfessionalExpertTest {
             click("#catalog button:first-child");
             click("#clientList .item:nth-child(2) button");
             assertJs("data.clients.length === 1 && data.orders.length === 2 && data.reports.length === 2");
-            click("nav [data-tab=home]");
-            click("#home .tile:last-child");
+            click("nav [data-tab=data]");
             js("const restoreInput = new DataTransfer(); restoreInput.items.add(new File(["
                 + JSONObject.quote(daily.toString()) + "], 'backup.json', {type:'application/json'}));"
-                + " $('restoreFile').files = restoreInput.files;"
-                + " $('restoreFile').dispatchEvent(new Event('change'));");
+                + " const backupInput = $('data').querySelector('input[type=file]');"
+                + " backupInput.files = restoreInput.files;"
+                + " backupInput.dispatchEvent(new Event('change'));");
             await("data.clients.length === 2 && messages.at(-1) === 'Резервну копію відновлено'");
             click("nav [data-tab=archive]");
             assertJs("$('archiveList').textContent.includes('Новий клієнт') && $('pdfList').textContent.includes('.pdf')");
