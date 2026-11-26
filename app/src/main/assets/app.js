@@ -13,6 +13,8 @@ let currentPdf = null;
 let screens = ['home'];
 let activeClientId = null;
 let editingClientId = null;
+let conclusionClientId = null;
+const conclusionDrafts = new Map();
 
 function validate(source) {
   if (!source || !Object.keys(defaults).every(key => Array.isArray(source[key]))) {
@@ -221,6 +223,134 @@ function pending(cid) {
   return data.findings.filter(finding => finding.cid === cid && !used.has(finding.id));
 }
 
+
+function conclusionNorm(s) {
+  return String(s??'').toLocaleLowerCase('uk').replace(/[’ʼ']/g,'').replace(/[^а-яіїєґa-z0-9\s]/gi,' ').replace(/\s+/g,' ').trim();
+}
+function conclusionCatalog() {
+  const recs=new Map((window.thermoRecommendationRows||[]).map(r=>[r.id,r]));
+  return (window.thermoDefectRows||[]).flatMap(d=>{
+    const r=recs.get(d.id);
+    return r&&r.title===d.title?[{title:d.title,description:d.text,recommendation:r.text}]:[];
+  });
+}
+function splitConclusionDefects(value,catalog) {
+  // Preserve full catalog descriptions and free-text paragraphs; split separate
+  // sentences only if every sentence is a recognized catalog observation.
+  const byDescription=new Map(catalog.map(r=>[conclusionNorm(r.description),r]));
+  return String(value??'').split(/\r?\n/).flatMap(line=>{
+    line=line.trim().replace(/^\d+[.)]\s+/,'');
+    if(!line)return [];
+    if(byDescription.has(conclusionNorm(line)))return [line];
+    const sentences=line.replace(/([.!?])\s+(?=[А-ЯІЇЄҐA-Z])/gu,'$1\n').split('\n').map(x=>x.trim()).filter(Boolean);
+    // Known observations can be separated even if mixed with free text.
+    if(sentences.some(s=>byDescription.has(conclusionNorm(s)))){
+      const result=[];let other=[];
+      for(const s of sentences){
+        if(byDescription.has(conclusionNorm(s))){
+          if(other.length){result.push(other.join(' '));other=[];}
+          result.push(s);
+        }else other.push(s);
+      }
+      if(other.length)result.push(other.join(' '));
+      return result;
+    }
+    return [line];
+  });
+}
+function buildInspectionConclusion(findings) {
+  const catalog=conclusionCatalog(), byDescription=new Map(catalog.map(r=>[conclusionNorm(r.description),r]));
+  const blocks=[], shared=[], usedGlobal=new Set();
+  let count=0, hasDefects=false;
+  for(const finding of findings){
+    const defects=splitConclusionDefects(finding.defect,catalog);
+    const recorded=[...new Set(String(finding.recommendation??'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];
+    const used=new Set();
+    const location=[finding.room,finding.type].filter(Boolean).join(' / ');
+    const measurements=[];
+    for(const [key,label,unit] of [['air','Повітря','°C'],['surface','Поверхня','°C'],['humidity','Вологість','%']]){
+      const v=finding[key];if(v!==''&&v!=null&&Number.isFinite(Number(v)))measurements.push(label+': '+v+' '+unit);
+    }
+    if(!defects.length){
+      if(location||measurements.length||recorded.length||finding.photo){
+        const summary=['Результат без опису дефекту'+(location?' — '+location:''),...measurements];
+        if(recorded.length)summary.push('Внесені рекомендації: '+recorded.join(' '));
+        shared.push(summary.join('\n'));
+      }
+      continue;
+    }
+    hasDefects=true;
+    for(const defect of defects){
+      const match=byDescription.get(conclusionNorm(defect));
+      const title=match?.title||'Зафіксоване спостереження';
+      const block=[(++count)+'. '+title+(location?' — '+location:''),defect];
+      if(measurements.length)block.push('Вимірювання ділянки: '+measurements.join('; ')+'.');
+      if(match){
+        const rec=recorded.find(r=>conclusionNorm(r)===conclusionNorm(match.recommendation));
+        if(rec){block.push('Рекомендація: '+rec);used.add(rec);}
+        else if(!recorded.length)block.push('Пропозиція з довідника (потребує підтвердження): '+match.recommendation);
+        else block.push('Окрему рекомендацію для цього дефекту потрібно уточнити.');
+      }else if(defects.length===1&&recorded.length){
+        block.push('Рекомендація: '+recorded.join('\n'));recorded.forEach(r=>used.add(r));
+      }else block.push('Окрему рекомендацію для цього спостереження потрібно уточнити.');
+      blocks.push(block.join('\n'));
+    }
+    const other=recorded.filter(r=>!used.has(r)&&!usedGlobal.has((location||finding.id||'')+'\n'+r));
+    if(other.length){
+      other.forEach(r=>usedGlobal.add((location||finding.id||'')+'\n'+r));
+      shared.push('Додаткові рекомендації'+(location?' — '+location:'')+':\n'+other.join('\n'));
+    }
+  }
+  if(!blocks.length&&!shared.length)return {text:'',count:0};
+  if(shared.length)blocks.push(shared.join('\n\n'));
+  if(hasDefects)blocks.push('Загальна рекомендація\nУточнити причини за результатами додаткових перевірок. Після усунення підтверджених дефектів провести повторне тепловізійне обстеження за порівнянних умов.');
+  else blocks.push('Загальна рекомендація\nНедостатньо описів дефектів для окремих висновків. Перевірити внесені дані.');
+  return {text:blocks.join('\n\n'),count};
+}
+function conclusionHtml(value) {
+  return String(value||'Висновок не внесено').split('\n').map(line=>{
+    const safe=esc(line);
+    return /^\d+\.\s+\S/.test(line)||line==='Загальна рекомендація'?'<b>'+safe+'</b>':safe;
+  }).join('<br>');
+}
+function rememberConclusionDraft() {
+  if(conclusionClientId===null)return;
+  const old=conclusionDrafts.get(conclusionClientId);
+  if(old)old.value=$('iConclusion').value;
+}
+function updateConclusionPreview() {
+  const value=$('iConclusion').value;
+  $('conclusionPreview').hidden=!value.trim();
+  $('conclusionFormatted').innerHTML=conclusionHtml(value);
+}
+function syncInspectionConclusion(force=false) {
+  const cid=$('iClient').value, field=$('iConclusion');
+  if(conclusionClientId!==cid){
+    rememberConclusionDraft();conclusionClientId=cid;
+    field.value=conclusionDrafts.get(cid)?.value||'';
+  }
+  const findings=pending(cid);
+  const generated=buildInspectionConclusion(findings);
+  const old=conclusionDrafts.get(cid)||{value:field.value,automatic:'',signature:''};
+  const signature=JSON.stringify(findings.map(f=>[f.id,f.type,f.room,f.air,f.surface,f.humidity,f.defect,f.recommendation]));
+  const manual=field.value!==old.automatic;
+  if(force||!manual){
+    field.value=generated.text;
+    conclusionDrafts.set(cid,{value:field.value,automatic:generated.text,signature});
+    $('conclusionStatus').textContent=generated.count?'Автоматично сформовано висновків: '+generated.count+'. Перевірте перед збереженням.':generated.text?'Підсумок сформовано; описів дефектів немає.':'Додайте результати обстеження.';
+  }else{
+    old.value=field.value;conclusionDrafts.set(cid,old);
+    $('conclusionStatus').textContent=old.signature!==signature?'Результати змінилися. Ручний висновок збережено; перевірте або оновіть його.':'Ручний висновок збережено. Перевірте перед збереженням.';
+  }
+  updateConclusionPreview();
+  return field.value;
+}
+function refreshInspectionConclusion() {
+  const state=conclusionDrafts.get($('iClient').value);
+  if(state&&$('iConclusion').value!==state.automatic&&!confirm('Замінити власноруч відредагований висновок автоматичним?'))return;
+  syncInspectionConclusion(true);
+}
+
 function saveReport() {
   const cid = $('iClient').value;
   if (!cid) return alert('Оберіть клієнта');
@@ -228,12 +358,13 @@ function saveReport() {
   if (!findings.length) return alert('Додайте хоча б один результат обстеження');
   const report = {
     id: uid(), cid, type: findings[findings.length - 1].type,
-    findings: findings.map(finding => finding.id), conclusion: $('iConclusion').value,
+    findings: findings.map(finding => finding.id), conclusion: syncInspectionConclusion(),
     expert: $('iExpert').value, date: new Date().toLocaleDateString('uk-UA'),
     client: { ...data.clients.find(client => client.id === cid) }
   };
   if (persist({ ...data, reports: [report, ...data.reports] })) {
     $('iConclusion').value = '';
+    conclusionDrafts.delete(cid);conclusionClientId=null;syncInspectionConclusion();
     if (activeClientId === cid && screens[screens.length - 2] === 'clientHistory') goBack();
     else tab('archive', true);
   }
@@ -244,7 +375,7 @@ function makeReport() {
   if (!cid) return alert('Оберіть клієнта');
   const findings = pending(cid);
   if (!findings.length) return alert('Немає результатів для звіту');
-  showReport(data.clients.find(client => client.id === cid), findings, $('iConclusion').value,
+  showReport(data.clients.find(client => client.id === cid), findings, syncInspectionConclusion(),
     $('iExpert').value, new Date().toLocaleDateString('uk-UA'));
 }
 
@@ -310,7 +441,7 @@ function showReport(client, findings, conclusion, expert, date, title = '', cond
     <h3>Результати обстеження</h3>${body}
     <div class="card">
       <h3>Підсумковий висновок експерта</h3>
-      <p>${esc(conclusion || 'Висновок не внесено').replace(/\n/g, '<br>')}</p>
+      <p>${conclusionHtml(conclusion)}</p>
       <p><b>Виконавець:</b> ${esc(expert)}</p>
       <p>Підпис: ____________________</p>
     </div>
@@ -362,6 +493,7 @@ async function restore(event) {
     }
     if (confirm('Замінити поточні дані резервною копією?') && persist(restored, true)) {
       currentPdf = null;
+      conclusionDrafts.clear();conclusionClientId=null;$('iConclusion').value='';syncInspectionConclusion();
       alert('Резервну копію відновлено');
     }
   } catch (error) {
@@ -461,7 +593,7 @@ function saveClientEdit() {
 }
 function newClientInspection() {
   if(!data.clients.some(c=>c.id===activeClientId))return;
-  const fields=['iRoom','iAir','iSurface','iHumidity','iDefect','iRecommendation','iPhoto','iConclusion'];
+  const fields=['iRoom','iAir','iSurface','iHumidity','iDefect','iRecommendation','iPhoto'];
   if($('iClient').value!==activeClientId && fields.some(id=>$(id).value)){
     if(!confirm('Перейти до іншого клієнта? Незбережені поля поточного обстеження буде очищено. Збережені результати залишаться в базі.'))return;
     fields.forEach(id=>$(id).value='');
@@ -484,6 +616,7 @@ function renderFindings() {
     <div class="muted">${esc(finding.type)} · ${esc(finding.date)}</div>
     <p>${esc(finding.defect)}</p>${photoMarkup(finding.photo)}
   </div>`).join('') || 'Ще немає доданих результатів';
+  syncInspectionConclusion();
 }
 
 function render() {
@@ -530,6 +663,7 @@ function render() {
 }
 
 $('iClient').addEventListener('change', renderFindings);
+$('iConclusion').addEventListener('input',()=>{rememberConclusionDraft();syncInspectionConclusion();});
 $('oService').addEventListener('change', updateOrderPrice);
 load();
 render();
@@ -602,7 +736,7 @@ async function templateDocument(save) {
   const client={id:selected?.id||uid(),name,phone:$('tePhone').value,address:$('teAddress').value,type:$('teObject').value,note:selected?.note||''};
   const title=chosenTemplate===templates[6]?'Звіт тепловізійного обстеження':chosenTemplate[0];
   const type=chosenTemplate[1], formattedDate=date.split('-').reverse().join('.');
-  const expert=$('teExpert').value, conditions=$('teConditions').value, conclusion=$('teConclusion').value;
+  const expert=$('teExpert').value, conditions=$('teConditions').value;let conclusion=$('teConclusion').value;
   const rows=[...$('teRows').children];
   if(!rows.length||rows.some(r=>[...r.querySelectorAll('input')].some(i=>!i.checkValidity())))return alert('Перевірте поля вимірювань.');
   templateBusy=true;
@@ -622,6 +756,7 @@ async function templateDocument(save) {
       if(f.room.trim()||f.defect.trim()||f.recommendation.trim()||f.photo||f.air!==''||f.surface!==''||f.humidity!=='')findings.push(f);
     }
     if(!findings.length)return alert('Внесіть хоча б один результат обстеження.');
+    if(!conclusion.trim()){conclusion=buildInspectionConclusion(findings).text;$('teConclusion').value=conclusion;}
     if(!save){showReport(client,findings,conclusion,expert,formattedDate,title,conditions);return;}
     const report={id:uid(),cid:client.id,type,title,conditions,client,findings:findings.map(f=>f.id),conclusion,expert,date:formattedDate};
     if(persist({...data,clients:selected?data.clients:[...data.clients,client],findings:[...data.findings,...findings],reports:[report,...data.reports]})){

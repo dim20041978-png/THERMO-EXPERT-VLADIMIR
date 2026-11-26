@@ -144,7 +144,12 @@ public class ProfessionalExpertTest {
             click("#addFindingButton");
             await("data.findings.length === 2 && !$('addFindingButton').disabled");
             assertJs("$('findingList').textContent.includes('Кухня') && $('findingList').querySelector('img') !== null");
-            js("$('iConclusion').value = 'Новий висновок'");
+            assertJs("$('iConclusion').value.startsWith('1. ') && $('conclusionFormatted').querySelector('b')!==null");
+            assertJs("(()=>{const ids=[60,0,15];const f={room:'Тест',air:'0',surface:'',defect:ids.map(i=>thermoDefectRows[i].text).join(' '),recommendation:ids.map(i=>thermoRecommendationRows[i].text).join('\\n')};const r=buildInspectionConclusion([f]);return r.count===3&&ids.every(i=>r.text.includes(thermoRecommendationRows[i].text))&&r.text.includes('Повітря: 0 °C')&&r.text.includes('3. ');})()");
+            js("$('iConclusion').value = 'Новий висновок'; $('iConclusion').dispatchEvent(new Event('input')); syncInspectionConclusion()");
+            assertJs("$('iConclusion').value==='Новий висновок'");
+            js("$('iClient').selectedIndex=0; renderFindings(); $('iClient').selectedIndex=1; renderFindings()");
+            assertJs("$('iConclusion').value==='Новий висновок'");
             click("#inspection button[onclick='makeReport()']");
             assertJs("$('reportContent').textContent.includes('Новий висновок') && $('report').classList.contains('active')");
             click("#report button[onclick='goBack()']");

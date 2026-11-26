@@ -127,7 +127,7 @@ nav.six-tab-nav button.active, .home-screen nav.six-tab-nav button.active {color
 <div id="recPanel" hidden class="card"><h3>Довідник рекомендацій</h3><p class="muted">100 шаблонів. Уточнюйте за результатами вимірювань. Електричні роботи — кваліфікованим спеціалістом після знеструмлення.</p><label for="recCat">Категорія</label><select id="recCat"></select><label for="recSearch">Пошук</label><input id="recSearch" type="search" placeholder="Назва дефекту"><p id="recCount" aria-live="polite"></p><div id="recList" style="max-height:45vh;overflow:auto"></div><div class="actions"><button type="button" class="primary" id="recInsert">Додати обрані</button><button type="button" class="secondary" id="recClose">Закрити</button></div></div>
 <div class="actions"><button class="primary" id="addFindingButton" onclick="addFinding()">Додати результат</button></div></div>
 <div class="card"><h3>Результати поточного обстеження</h3><div id="findingList" class="empty">Ще немає доданих результатів</div></div>
-<div class="card"><h3>Підсумковий висновок експерта</h3><label for="iConclusion">Загальний висновок</label><textarea id="iConclusion" placeholder="Підсумковий висновок за результатами обстеження..."></textarea><label for="iExpert">Експерт / виконавець</label><input id="iExpert" value="Експерт THERMO EXPERT VLADIMIR"><div class="actions"><button class="primary" onclick="saveReport()">Зберегти обстеження</button><button class="secondary" onclick="makeReport()">Сформувати PDF / Друк</button></div></div>
+<div class="card"><h3>Підсумковий висновок експерта</h3><label for="iConclusion">Загальний висновок</label><textarea id="iConclusion" rows="8" placeholder="Підсумковий висновок за результатами обстеження..."></textarea><p class="muted" id="conclusionStatus" aria-live="polite"></p><div class="actions"><button type="button" class="secondary" id="refreshConclusion" onclick="refreshInspectionConclusion()">↻ Оновити висновок</button></div><details id="conclusionPreview" hidden><summary>Перегляд оформленого висновку</summary><div id="conclusionFormatted"></div></details><label for="iExpert">Експерт / виконавець</label><input id="iExpert" value="Експерт THERMO EXPERT VLADIMIR"><div class="actions"><button class="primary" onclick="saveReport()">Зберегти обстеження</button><button class="secondary" onclick="makeReport()">Сформувати PDF / Друк</button></div></div>
 </section>
 <section id="prices" class="panel">
 <h2>Прайс-лист</h2><div class="card"><p class="muted">Редагуй ціни відповідно до власного прайсу. Початкові суми демонстраційні.</p><div id="priceList"></div><div class="actions"><button class="primary" onclick="savePrices()">Зберегти ціни</button></div></div>
@@ -288,6 +288,7 @@ window.resetRecommendationState=function(){
 d.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(run,450);});
 d.addEventListener('change',run);
 f.addEventListener('input',reconcileEdits);
+syncInspectionConclusion();
 })();
 </script></body>
 </html>
