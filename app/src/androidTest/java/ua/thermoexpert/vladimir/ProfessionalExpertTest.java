@@ -165,6 +165,21 @@ public class ProfessionalExpertTest {
             click("nav [data-tab=archive]");
             assertJs("$('archiveList').textContent.includes('Новий клієнт') && $('pdfList').textContent.includes('.pdf')");
             saveScreenshot("archive-test.png", false);
+            assertJs("$('templateList').querySelectorAll('button').length === 8");
+            js("window.templateCount=data.reports.length; openTemplate(6)");
+            assertJs("$('template').classList.contains('active') && $('templateExample').textContent.includes('Умовний')");
+            js("previewTemplate()");
+            assertJs("currentPdf.title.startsWith('ЗРАЗОК') && data.reports.length===templateCount");
+            js("goBack(); startTemplate()");
+            assertJs("$('teName').value==='' && $('teRows').children.length===1");
+            js("$('teClient').selectedIndex=1; fillTemplateClient(); $('teConditions').value='Умови тесту'; $('teRows').querySelector('[data-f=room]').value='Тестова ділянка'; $('teRows').querySelector('[data-f=surface]').value='15'; addTemplateRow(); $('teRows').lastElementChild.querySelector('[data-f=defect]').value='Другий результат'; templateDocument(false)");
+            await("$('report').classList.contains('active')");
+            assertJs("currentPdf.fs.length===2 && currentPdf.conditions==='Умови тесту' && data.reports.length===templateCount");
+            js("goBack(); templateDocument(true)");
+            await("$('archive').classList.contains('active') && data.reports.length===templateCount+1");
+            js("openArchived(0)");
+            assertJs("currentPdf.title==='Звіт тепловізійного обстеження' && currentPdf.fs.length===2 && currentPdf.conditions==='Умови тесту'");
+
         } finally {
             instrumentation.runOnMainSync(activity::finish);
         }

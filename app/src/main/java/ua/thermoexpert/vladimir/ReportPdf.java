@@ -76,8 +76,9 @@ final class ReportPdf implements AutoCloseable {
         String name="THERMO-"+new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss",java.util.Locale.ROOT).format(new java.util.Date())+"-"+java.util.UUID.randomUUID().toString().substring(0,8)+".pdf";
         File file=new File(dir,name),tmp=new File(dir,name+".tmp");
         try(ReportPdf p=new ReportPdf()){
-            p.next();p.text("ЗВІТ ТЕПЛОВІЗІЙНОГО ОБСТЕЖЕННЯ",true);p.text("THERMO EXPERT VLADIMIR",true);p.text("Дата: "+r.optString("date"),false);
+            p.next();String title=r.optString("title");p.text(title.isEmpty()?"ЗВІТ ТЕПЛОВІЗІЙНОГО ОБСТЕЖЕННЯ":title,true);p.text("THERMO EXPERT VLADIMIR",true);p.text("Дата: "+r.optString("date"),false);
             p.text("Замовник: "+c.optString("name")+"\nТелефон: "+c.optString("phone")+"\nАдреса: "+c.optString("address")+"\nТип об’єкта: "+c.optString("type"),false);
+            String conditions=r.optString("conditions");if(!conditions.isEmpty()){p.text("Умови та методика",true);p.text(conditions,false);}
             for(int i=0;i<fs.length();i++){JSONObject f=fs.getJSONObject(i);String room=f.optString("room");p.text((i+1)+". "+(room.isEmpty()?f.optString("type"):room),true);p.text("Напрямок: "+f.optString("type")+"\nТемпература повітря: "+f.optString("air")+" °C\nТемпература поверхні: "+f.optString("surface")+" °C\nВологість: "+f.optString("humidity")+" %\nСпостереження: "+f.optString("defect")+"\nРекомендації: "+f.optString("recommendation"),false);p.photo(f.optString("photo"));}
             p.text("Підсумковий висновок експерта",true);p.text(r.optString("conclusion")+"\nВиконавець: "+r.optString("expert")+"\nПідпис: ____________________",false);p.text("Висновок потребує перевірки й затвердження відповідальним фахівцем.",false);
             p.doc.finishPage(p.page);p.page=null;try(FileOutputStream out=new FileOutputStream(tmp)){p.doc.writeTo(out);out.getFD().sync();}if(!tmp.renameTo(file))throw new IOException("Не вдалося зберегти архів");

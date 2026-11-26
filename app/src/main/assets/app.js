@@ -273,8 +273,8 @@ function savePdf() {
   else window.print();
 }
 
-function showReport(client, findings, conclusion, expert, date) {
-  currentPdf = { c: client, fs: findings, conclusion, expert, date };
+function showReport(client, findings, conclusion, expert, date, title = '', conditions = '') {
+  currentPdf = { c: client, fs: findings, conclusion, expert, date, title, conditions };
   const body = findings.map((finding, index) => `
     <div class="card">
       <h3>${index + 1}. ${esc(finding.room || finding.type)}</h3>
@@ -287,11 +287,12 @@ function showReport(client, findings, conclusion, expert, date) {
       ${photoMarkup(finding.photo)}
     </div>`).join('');
   $('reportContent').innerHTML = `
-    <h2>ЗВІТ ТЕПЛОВІЗІЙНОГО ОБСТЕЖЕННЯ</h2>
+    <h2>${esc(title || 'ЗВІТ ТЕПЛОВІЗІЙНОГО ОБСТЕЖЕННЯ')}</h2>
     <p><b>THERMO EXPERT VLADIMIR</b></p>
     <p>Дата: ${esc(date)}</p>
     <p><b>Замовник:</b> ${esc(client.name)}<br><b>Телефон:</b> ${esc(client.phone)}<br>
        <b>Адреса об’єкта:</b> ${esc(client.address)}<br><b>Тип об’єкта:</b> ${esc(client.type)}</p>
+    ${conditions ? `<div class="card"><h3>Умови та методика</h3><p>${esc(conditions).replace(/\n/g, '<br>')}</p></div>` : ''}
     <h3>Результати обстеження</h3>${body}
     <div class="card">
       <h3>Підсумковий висновок експерта</h3>
@@ -362,7 +363,7 @@ function openArchived(index) {
   const client = report.client || data.clients.find(entry => entry.id === report.cid) ||
     { name: 'Клієнт видалений' };
   showReport(client, data.findings.filter(finding => report.findings.includes(finding.id)),
-    report.conclusion, report.expert, report.date);
+    report.conclusion, report.expert, report.date, report.title, report.conditions);
 }
 
 function delClient(index) {
@@ -398,7 +399,7 @@ function render() {
 
   $('archiveList').innerHTML = data.reports.map((report, index) => `<div class="item">
     <b>${esc(report.client?.name || clientName(report.cid))}</b>
-    <p>${esc(report.date)} · ${esc(report.type)}</p>
+    <p>${esc(report.date)} · ${esc(report.title || report.type)}</p>
     <button class="secondary" onclick="openArchived(${index})">Перегляд звіту</button>
   </div>`).join('') || 'Архів порожній';
 
@@ -426,3 +427,105 @@ $('oService').addEventListener('change', updateOrderPrice);
 load();
 render();
 updateOrderPrice();
+
+ 
+// Immutable document templates: examples are never inserted into the database.
+const templates = Object.freeze([
+  ['Бланк тепловізійного обстеження','Будинок / тепловтрати','Ділянка, температура повітря й поверхні, вологість, спостереження та рекомендації.'],
+  ['Акт обстеження приватного будинку','Будинок / тепловтрати','Стіни, кути, перекриття, умови всередині та зовні; порівняти температури ділянок.'],
+  ['Акт діагностики електропроводки','Електропроводка','Щит, контакти, навантаження, струм, контрольна температура, ΔT. Не робити висновок про безпечність лише за термограмою.'],
+  ['Акт діагностики теплої підлоги','Тепла підлога','Тип системи, режим, час стабілізації, ділянки нерівномірного нагріву.'],
+  ['Акт обстеження вікон та дверей','Будинок / тепловтрати','Рами, укоси, стики, ущільнення, температурні умови та можливі причини аномалій.'],
+  ['Акт виявлених дефектів','Інженерні системи','Місце дефекту, фактичні вимірювання, ознаки, ймовірна причина та спосіб усунення.'],
+  ['Зразок заповненого звіту','Будинок / тепловтрати','Навчальний приклад із вигаданими даними. Не є фактичним висновком.'],
+  ['Акт повторного обстеження','Будинок / тепловтрати','Дата первинного огляду, попередні та поточні показники, зміни після усунення дефектів.']
+].map(Object.freeze));
+let chosenTemplate = null;
+let templateBusy = false;
+function templateSample() {
+  const filled = chosenTemplate === templates[6];
+  return {
+    client: {name: filled ? 'Умовний замовник (приклад)' : '________________', phone:'________________', address:filled ? 'Умовний об’єкт' : '________________', type:'________________'},
+    findings: [{room:filled?'Внутрішній кут кімнати':'________________',type:chosenTemplate[1],air:filled?'21':'',surface:filled?'15':'',humidity:filled?'50':'',defect:filled?'На умовному прикладі температура кута нижча за сусідню поверхню.':'________________',recommendation:filled?'Перевірити умови вимірювання та конструкцію; причину підтвердити додатковим оглядом.':'________________'}],
+    conclusion:filled?'Показники вигадані. Приклад оформлення, а не результат реального обстеження.':'________________'
+  };
+}
+function openTemplate(index) {
+  if (!templates[index] || templateBusy) return;
+  chosenTemplate = templates[index];
+  $('templateTitle').textContent = chosenTemplate[0];
+  $('templateGuide').textContent = chosenTemplate[2];
+  const s=templateSample(), f=s.findings[0];
+  $('templateExample').textContent = ['Замовник: '+s.client.name,'Адреса: '+s.client.address,'Ділянка: '+f.room,'Температури: '+(f.air||'___')+' / '+(f.surface||'___')+' °C','Спостереження: '+f.defect,'Рекомендації: '+f.recommendation,'Висновок: '+s.conclusion].join('\n');
+  $('templateExample').style.whiteSpace='pre-wrap';
+  tab('template');
+}
+function previewTemplate() {
+  if (!chosenTemplate) return;
+  const s=templateSample();
+  showReport(s.client,s.findings,s.conclusion,'________________','________________','ЗРАЗОК — '+chosenTemplate[0],chosenTemplate[2]);
+}
+function fillTemplateClient() {
+  const c=data.clients.find(x=>x.id===$('teClient').value)||{};
+  for(const [id,key] of [['teName','name'],['tePhone','phone'],['teAddress','address'],['teObject','type']]) $(id).value=c[key]||'';
+}
+function startTemplate() {
+  if (!chosenTemplate || templateBusy) return;
+  $('teTitle').textContent=chosenTemplate[0];
+  $('teClient').replaceChildren(new Option('Новий клієнт',''),...data.clients.map(c=>new Option(c.name,c.id)));
+  fillTemplateClient();
+  $('teExpert').value=$('iExpert').value;
+  const now=new Date();
+  $('teDate').value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+  $('teConditions').value=''; $('teConclusion').value=''; $('teRows').replaceChildren();
+  addTemplateRow(); tab('templateEdit');
+}
+function addTemplateRow() {
+  if(templateBusy) return;
+  const card=document.createElement('div'); card.className='card template-finding';
+  card.innerHTML='<h3>Результат обстеження</h3><label>Ділянка<input data-f="room"></label><label>Температура повітря / контрольна, °C<input data-f="air" type="number" step="any"></label><label>Температура поверхні, °C<input data-f="surface" type="number" step="any"></label><label>Вологість, %<input data-f="humidity" type="number" min="0" max="100" step="any"></label><label>Спостереження / дефект<textarea data-f="defect"></textarea></label><label>Рекомендації<textarea data-f="recommendation"></textarea></label><label>Фото або термограма<input data-f="photo" type="file" accept="image/*"></label><button type="button" class="secondary">Видалити ділянку</button>';
+  card.querySelector('button').onclick=()=>{if(!templateBusy && $('teRows').children.length>1)card.remove();};
+  $('teRows').append(card);
+}
+async function templateDocument(save) {
+  if(templateBusy||!chosenTemplate)return;
+  const name=$('teName').value.trim(), date=$('teDate').value;
+  if(!name||!date)return alert('Вкажіть замовника та дату обстеження.');
+  const selected=data.clients.find(c=>c.id===$('teClient').value);
+  const client={id:selected?.id||uid(),name,phone:$('tePhone').value,address:$('teAddress').value,type:$('teObject').value,note:selected?.note||''};
+  const title=chosenTemplate===templates[6]?'Звіт тепловізійного обстеження':chosenTemplate[0];
+  const type=chosenTemplate[1], formattedDate=date.split('-').reverse().join('.');
+  const expert=$('teExpert').value, conditions=$('teConditions').value, conclusion=$('teConclusion').value;
+  const rows=[...$('teRows').children];
+  if(!rows.length||rows.some(r=>[...r.querySelectorAll('input')].some(i=>!i.checkValidity())))return alert('Перевірте поля вимірювань.');
+  templateBusy=true;
+  const controls=[...$('templateEdit').querySelectorAll('button,input,textarea,select')];
+  controls.forEach(c=>c.disabled=true);
+  try{
+    const findings=[];
+    for(const row of rows){
+      const f={id:uid(),cid:client.id,type,date:formattedDate,photo:''};
+      for(const key of ['room','air','surface','humidity','defect','recommendation'])f[key]=row.querySelector('[data-f="'+key+'"]').value;
+      const file=row.querySelector('[data-f="photo"]').files[0];
+      if(file){
+        if(file.size>8000000)throw Error('Фото завелике. Виберіть файл до 8 МБ.');
+        f.photo=await readFile(file,'readAsDataURL');
+        if(!photoMarkup(f.photo))throw Error('Некоректне фото.');
+      }
+      if(f.room.trim()||f.defect.trim()||f.recommendation.trim()||f.photo||f.air!==''||f.surface!==''||f.humidity!=='')findings.push(f);
+    }
+    if(!findings.length)return alert('Внесіть хоча б один результат обстеження.');
+    if(!save){showReport(client,findings,conclusion,expert,formattedDate,title,conditions);return;}
+    const report={id:uid(),cid:client.id,type,title,conditions,client,findings:findings.map(f=>f.id),conclusion,expert,date:formattedDate};
+    if(persist({...data,clients:selected?data.clients:[...data.clients,client],findings:[...data.findings,...findings],reports:[report,...data.reports]})){
+      $('teRows').replaceChildren();
+      tab('archive',true);
+    }
+  }catch(e){alert(e.message||'Не вдалося підготувати документ.');}
+  finally{templateBusy=false;controls.forEach(c=>c.disabled=false);}
+}
+templates.forEach((template,index)=>{
+  const row=document.createElement('div');row.className='item';
+  const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=template[0];b.onclick=()=>openTemplate(index);
+  row.append(b);$('templateList').append(row);
+});
