@@ -540,7 +540,7 @@ function renderClientHistory() {
     const row=document.createElement('div');row.className='item';
     row.innerHTML='<b>'+esc(report.title||report.type||'Обстеження')+'</b><p class="muted">'+esc(report.date)+' · Результатів: '+report.findings.length+'</p>';
     const actions=document.createElement('div');actions.className='actions';
-    for(const [label,action] of [['Перегляд','view'],['PDF','pdf'],['Надіслати','share']]){
+    for(const [label,action] of [['Перегляд','view'],['PDF','pdf'],['Надіслати','share'],['Сформувати акт','act']]){
       const button=document.createElement('button');button.className='secondary';button.textContent=label;
       button.onclick=()=>openClientReport(report.id,action);actions.append(button);
     }
@@ -552,6 +552,7 @@ function renderClientHistory() {
 function openClientReport(id,action) {
   const index=data.reports.findIndex(r=>r.id===id&&r.cid===activeClientId);
   if(index<0)return;
+  if(action==='act'){openArchiveTemplates(index);return;}
   openArchived(index);
   if(action==='pdf')savePdf();
   if(action==='share')sharePdf();
@@ -620,7 +621,7 @@ function render() {
   $('archiveList').innerHTML = data.reports.map((report, index) => `<div class="item">
     <b>${esc(report.client?.name || clientName(report.cid))}</b>
     <p>${esc(report.date)} · ${esc(report.title || report.type)}</p>
-    <button class="secondary" onclick="openArchived(${index})">Перегляд звіту</button>
+    <div class="actions"><button class="secondary" onclick="openArchived(${index})">Перегляд звіту</button><button class="primary" onclick="openArchiveTemplates(${index})">Сформувати акт обстеження</button></div>
   </div>`).join('') || 'Архів порожній';
 
   $('clientList').innerHTML = data.clients.map((client, index) => `<div class="item">
@@ -665,6 +666,78 @@ const templates = Object.freeze([
 ].map(Object.freeze));
 let chosenTemplate = null;
 let templateBusy = false;
+let actSourceId = null;
+let templateSource = null;
+
+function archiveTemplateOptions(report, findings, all=false) {
+  const types=new Set([report.type,...findings.map(f=>f.type)]);
+  const recommended=[];
+  if(types.has('Електропроводка'))recommended.push(2);
+  if(types.has('Тепла підлога'))recommended.push(3);
+  if(types.has('Будинок / тепловтрати'))recommended.push(1,4);
+  if(types.has('Інженерні системи'))recommended.push(5);
+  if(!recommended.length)recommended.push(0);
+  const ids=[...new Set([...recommended,0,5,6,7,...(all?[0,1,2,3,4,5,6,7]:[])])];
+  return ids.map(index=>({index,recommended:recommended.includes(index)}));
+}
+function reportFindings(report) {
+  const byId=new Map(data.findings.map(f=>[f.id,f]));
+  return report.findings.map(id=>byId.get(id)).filter(Boolean);
+}
+function openArchiveTemplates(index) {
+  const report=data.reports[index];
+  if(!report||templateBusy)return;
+  actSourceId=report.id;
+  renderArchiveTemplates(false);tab('archiveTemplatePicker');
+}
+function renderArchiveTemplates(all=false) {
+  const report=data.reports.find(r=>r.id===actSourceId);
+  const list=$('actTemplateList');list.replaceChildren();
+  if(!report){$('actSourceSummary').textContent='Обстеження не знайдено';return;}
+  const fs=reportFindings(report);
+  $('actSourceSummary').textContent=[report.client?.name||clientName(report.cid),report.date,report.title||report.type].filter(Boolean).join(' · ');
+  for(const item of archiveTemplateOptions(report,fs,all)){
+    const row=document.createElement('div');row.className='item';
+    const b=document.createElement('button');b.type='button';b.className=item.recommended?'primary':'secondary';
+    b.textContent=item.index===6?'Звіт тепловізійного обстеження':templates[item.index][0];
+    b.onclick=()=>startArchivedTemplate(item.index);
+    row.append(b);
+    if(item.recommended){const label=document.createElement('p');label.className='muted';label.textContent='Рекомендовано за типом обстеження';row.append(label);}
+    list.append(row);
+  }
+  $('actShowAll').hidden=all||list.children.length===templates.length;
+}
+function inspectionDateInput(value) {
+  const s=String(value||'').trim();
+  const m=s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:'';
+}
+function startArchivedTemplate(index) {
+  const report=data.reports.find(r=>r.id===actSourceId);
+  if(!report||!templates[index]||templateBusy)return;
+  const fs=reportFindings(report);
+  if(!fs.length)return alert('В архівному обстеженні немає доступних результатів.');
+  if(fs.length!==report.findings.length && !confirm('Частина результатів відсутня. Сформувати акт лише з доступних записів?'))return;
+  const client=report.client||data.clients.find(c=>c.id===report.cid)||{};
+  chosenTemplate=templates[index];
+  templateSource={id:report.id,cid:report.cid,type:report.type,client:{...client},conclusion:String(report.conclusion||'')};
+  $('teTitle').textContent=index===6?'Звіт тепловізійного обстеження':chosenTemplate[0];
+  $('teSourceNotice').hidden=false;
+  $('teSourceNotice').textContent='Дані перенесено з архівного обстеження '+String(report.date||'')+'. Редагується новий документ; оригінал не змінюється.';
+  $('teGuide').textContent=index===6?'Перевірте фактичні дані перед збереженням.':chosenTemplate[2];
+  $('teClient').replaceChildren(new Option(client.name||'Клієнт архівного обстеження',String(report.cid||'')));
+  $('teClient').disabled=true;
+  for(const [field,key] of [['teName','name'],['tePhone','phone'],['teAddress','address'],['teObject','type']])$(field).value=client[key]??'';
+  $('teDate').value=inspectionDateInput(report.date);
+  $('teExpert').value=report.expert??'';
+  $('teConditions').value=report.conditions??'';
+  $('teConclusion').value=report.conclusion??'';
+  $('teRows').replaceChildren();
+  fs.forEach(f=>addTemplateRow(f));
+  tab('templateEdit');
+}
+
 function templateSample() {
   const filled = chosenTemplate === templates[6];
   return {
@@ -676,6 +749,7 @@ function templateSample() {
 function openTemplate(index) {
   if (!templates[index] || templateBusy) return;
   chosenTemplate = templates[index];
+  templateSource=null;
   $('templateTitle').textContent = chosenTemplate[0];
   $('templateGuide').textContent = chosenTemplate[2];
   const s=templateSample(), f=s.findings[0];
@@ -694,6 +768,10 @@ function fillTemplateClient() {
 }
 function startTemplate() {
   if (!chosenTemplate || templateBusy) return;
+  templateSource=null;
+  $('teSourceNotice').hidden=true;
+  $('teGuide').textContent=chosenTemplate[2];
+  $('teClient').disabled=false;
   $('teTitle').textContent=chosenTemplate[0];
   $('teClient').replaceChildren(new Option('Новий клієнт',''),...data.clients.map(c=>new Option(c.name,c.id)));
   fillTemplateClient();
@@ -703,11 +781,20 @@ function startTemplate() {
   $('teConditions').value=''; $('teConclusion').value=''; $('teRows').replaceChildren();
   addTemplateRow(); tab('templateEdit');
 }
-function addTemplateRow() {
+function addTemplateRow(source=null) {
   if(templateBusy) return;
   const card=document.createElement('div'); card.className='card template-finding';
-  card.innerHTML='<h3>Результат обстеження</h3><label>Ділянка<input data-f="room"></label><label>Температура повітря / контрольна, °C<input data-f="air" type="number" step="any"></label><label>Температура поверхні, °C<input data-f="surface" type="number" step="any"></label><label>Вологість, %<input data-f="humidity" type="number" min="0" max="100" step="any"></label><label>Спостереження / дефект<textarea data-f="defect"></textarea></label><label>Рекомендації<textarea data-f="recommendation"></textarea></label><label>Фото або термограма<input data-f="photo" type="file" accept="image/*"></label><button type="button" class="secondary">Видалити ділянку</button>';
-  card.querySelector('button').onclick=()=>{if(!templateBusy && $('teRows').children.length>1)card.remove();};
+  card.innerHTML='<h3>Результат обстеження</h3><label>Напрямок обстеження<input data-f="type"></label><label>Ділянка<input data-f="room"></label><label>Температура повітря / контрольна, °C<input data-f="air" type="number" step="any"></label><label>Температура поверхні, °C<input data-f="surface" type="number" step="any"></label><label>Вологість, %<input data-f="humidity" type="number" min="0" max="100" step="any"></label><label>Спостереження / дефект<textarea data-f="defect"></textarea></label><label>Рекомендації<textarea data-f="recommendation"></textarea></label><div class="template-photo"></div><label>Фото або термограма<input data-f="photo" type="file" accept="image/*"></label><button type="button" class="secondary template-remove-row">Видалити ділянку</button>';
+  card.querySelector('.template-remove-row').onclick=()=>{if(!templateBusy && $('teRows').children.length>1)card.remove();};
+  card.querySelector('[data-f="type"]').value=source?.type||templateSource?.type||chosenTemplate[1];
+  for(const key of ['room','air','surface','humidity','defect','recommendation'])card.querySelector('[data-f="'+key+'"]').value=source?.[key]??'';
+  card.retainedPhoto=source?.photo||'';
+  const photo=card.querySelector('.template-photo');
+  if(card.retainedPhoto && photoMarkup(card.retainedPhoto)){
+    photo.innerHTML=photoMarkup(card.retainedPhoto);
+    const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Видалити скопійоване фото';
+    remove.onclick=()=>{card.retainedPhoto='';photo.replaceChildren();};photo.append(remove);
+  }
   $('teRows').append(card);
 }
 async function templateDocument(save) {
@@ -715,9 +802,10 @@ async function templateDocument(save) {
   const name=$('teName').value.trim(), date=$('teDate').value;
   if(!name||!date)return alert('Вкажіть замовника та дату обстеження.');
   const selected=data.clients.find(c=>c.id===$('teClient').value);
-  const client={id:selected?.id||uid(),name,phone:$('tePhone').value,address:$('teAddress').value,type:$('teObject').value,note:selected?.note||''};
+  const source=templateSource;
+  const client={id:source?.cid||selected?.id||uid(),name,phone:$('tePhone').value,address:$('teAddress').value,type:$('teObject').value,note:source?.client?.note||selected?.note||''};
   const title=chosenTemplate===templates[6]?'Звіт тепловізійного обстеження':chosenTemplate[0];
-  const type=chosenTemplate[1], formattedDate=date.split('-').reverse().join('.');
+  const type=source?.type||chosenTemplate[1], formattedDate=date.split('-').reverse().join('.');
   const expert=$('teExpert').value, conditions=$('teConditions').value;let conclusion=$('teConclusion').value;
   const rows=[...$('teRows').children];
   if(!rows.length||rows.some(r=>[...r.querySelectorAll('input')].some(i=>!i.checkValidity())))return alert('Перевірте поля вимірювань.');
@@ -727,7 +815,7 @@ async function templateDocument(save) {
   try{
     const findings=[];
     for(const row of rows){
-      const f={id:uid(),cid:client.id,type,date:formattedDate,photo:''};
+      const f={id:uid(),cid:client.id,type:row.querySelector('[data-f="type"]').value.trim()||type,date:formattedDate,photo:row.retainedPhoto||''};
       for(const key of ['room','air','surface','humidity','defect','recommendation'])f[key]=row.querySelector('[data-f="'+key+'"]').value;
       const file=row.querySelector('[data-f="photo"]').files[0];
       if(file){
@@ -740,13 +828,14 @@ async function templateDocument(save) {
     if(!findings.length)return alert('Внесіть хоча б один результат обстеження.');
     if(!conclusion.trim()){conclusion=buildInspectionConclusion(findings).text;$('teConclusion').value=conclusion;}
     if(!save){showReport(client,findings,conclusion,expert,formattedDate,title,conditions);return;}
-    const report={id:uid(),cid:client.id,type,title,conditions,client,findings:findings.map(f=>f.id),conclusion,expert,date:formattedDate};
-    if(persist({...data,clients:selected?data.clients:[...data.clients,client],findings:[...data.findings,...findings],reports:[report,...data.reports]})){
+    const report={id:uid(),cid:client.id,type,title,conditions,client,findings:findings.map(f=>f.id),conclusion,expert,date:formattedDate,...(source?{sourceReportId:source.id}:{})};
+    if(persist({...data,clients:(source||selected)?data.clients:[...data.clients,client],findings:[...data.findings,...findings],reports:[report,...data.reports]})){
       $('teRows').replaceChildren();
+      templateSource=null;$('teClient').disabled=false;
       tab('archive',true);
     }
   }catch(e){alert(e.message||'Не вдалося підготувати документ.');}
-  finally{templateBusy=false;controls.forEach(c=>c.disabled=false);}
+  finally{templateBusy=false;controls.forEach(c=>c.disabled=false);$('teClient').disabled=!!templateSource;}
 }
 templates.forEach((template,index)=>{
   const row=document.createElement('div');row.className='item';

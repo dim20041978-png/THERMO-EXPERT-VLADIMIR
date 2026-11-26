@@ -234,6 +234,23 @@ public class ProfessionalExpertTest {
             await("$('archive').classList.contains('active') && data.reports.length===templateCount+1");
             js("openArchived(0)");
             assertJs("currentPdf.title==='Звіт тепловізійного обстеження' && currentPdf.fs.length===2 && currentPdf.conditions==='Умови тесту'");
+            js("goBack(); window.originalReport=JSON.stringify(data.reports[0]); window.sourceId=data.reports[0].id; window.beforeAct=data.reports.length; openArchiveTemplates(0)");
+            assertJs("$('archiveTemplatePicker').classList.contains('active') && $('actTemplateList').querySelector('button')");
+            js("renderArchiveTemplates(true)");
+            assertJs("$('actTemplateList').querySelectorAll('button').length===8");
+            js("startArchivedTemplate(2)");
+            assertJs("$('templateEdit').classList.contains('active') && $('teName').value===data.reports[0].client.name && $('teRows').children.length===2 && $('teClient').disabled && $('teConditions').value==='Умови тесту'");
+            js("$('teRows').firstElementChild.querySelector('[data-f=room]').value='Змінена ділянка'; templateDocument(false)");
+            await("$('report').classList.contains('active')");
+            assertJs("currentPdf.title==='Акт діагностики електропроводки' && currentPdf.fs[0].room==='Змінена ділянка' && JSON.stringify(data.reports[0])===originalReport");
+            js("goBack(); templateDocument(true)");
+            await("$('archive').classList.contains('active') && data.reports.length===beforeAct+1");
+            assertJs("data.reports[0].sourceReportId===sourceId && JSON.stringify(data.reports[1])===originalReport && data.reports[0].findings.every(id=>!data.reports[1].findings.includes(id))");
+            js("openArchiveTemplates(data.reports.findIndex(r=>r.id==='legacy-report')); startArchivedTemplate(0)");
+            assertJs("$('teRows').querySelector('.template-photo img')!==null && $('teRows').firstElementChild.retainedPhoto.startsWith('data:image/png;base64,')");
+            js("templateDocument(false)");
+            await("$('report').classList.contains('active')");
+            assertJs("currentPdf.fs[0].photo.startsWith('data:image/png;base64,') && currentPdf.conclusion==='Висновок 1.1.5'");
 
         } finally {
             instrumentation.runOnMainSync(activity::finish);
