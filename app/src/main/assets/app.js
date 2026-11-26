@@ -255,13 +255,13 @@ function conclusionCatalog() {
   const recs=new Map((window.thermoRecommendationRows||[]).map(r=>[r.id,r]));
   return (window.thermoDefectRows||[]).flatMap(d=>{
     const r=recs.get(d.id);
-    return r&&r.title===d.title?[{title:d.title,description:d.text,recommendation:r.text}]:[];
+    return r&&r.title===d.title?[{title:d.title,description:d.text,aliases:d.aliases||[],recommendation:r.text,previousRecommendations:r.aliases||[]}]:[];
   });
 }
 function splitConclusionDefects(value,catalog) {
   // Preserve full catalog descriptions and free-text paragraphs; split separate
   // sentences only if every sentence is a recognized catalog observation.
-  const byDescription=new Map(catalog.map(r=>[conclusionNorm(r.description),r]));
+  const byDescription=new Map(catalog.flatMap(r=>[r.description,...r.aliases].map(desc=>[conclusionNorm(desc),r])));
   return String(value??'').split(/\r?\n/).flatMap(line=>{
     line=line.trim().replace(/^\d+[.)]\s+/,'');
     if(!line)return [];
@@ -283,7 +283,7 @@ function splitConclusionDefects(value,catalog) {
   });
 }
 function buildInspectionConclusion(findings) {
-  const catalog=conclusionCatalog(), byDescription=new Map(catalog.map(r=>[conclusionNorm(r.description),r]));
+  const catalog=conclusionCatalog(), byDescription=new Map(catalog.flatMap(r=>[r.description,...r.aliases].map(desc=>[conclusionNorm(desc),r])));
   const blocks=[], shared=[], usedGlobal=new Set();
   let count=0, hasDefects=false;
   for(const finding of findings){
@@ -310,8 +310,8 @@ function buildInspectionConclusion(findings) {
       const block=[(++count)+'. '+title+(location?' — '+location:''),defect];
       if(measurements.length)block.push('Вимірювання ділянки: '+measurements.join('; ')+'.');
       if(match){
-        const rec=recorded.find(r=>conclusionNorm(r)===conclusionNorm(match.recommendation));
-        if(rec){block.push('Рекомендація: '+rec);used.add(rec);}
+        const rec=recorded.find(r=>[match.recommendation,...match.previousRecommendations].some(text=>conclusionNorm(r)===conclusionNorm(text)));
+        if(rec){block.push('Рекомендація: '+rec);used.add(rec);if(conclusionNorm(rec)!==conclusionNorm(match.recommendation))block.push('Уточнена рекомендація з чинного довідника (перевірити): '+match.recommendation);}
         else if(!recorded.length)block.push('Пропозиція з довідника (потребує підтвердження): '+match.recommendation);
         else block.push('Окрему рекомендацію для цього дефекту потрібно уточнити.');
       }else if(defects.length===1&&recorded.length){
