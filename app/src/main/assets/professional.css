@@ -289,3 +289,9 @@ nav {bottom:env(safe-area-inset-bottom, 0px);}
 .card {border-color:#9bc5e2;box-shadow:0 3px 9px #09244318;}
 .card h3 {color:#103e68;}
 }
+
+/* Client directory: preserve the existing artwork, navigation and color scheme. */
+#homeClients {flex: 1 0 100%; text-align: center;}
+.directory-client {display:block;width:100%;text-align:left;}
+.directory-client > span {display:block;margin-top:4px;}
+#historyProfile p {overflow-wrap:anywhere;}

@@ -76,7 +76,7 @@ nav.six-tab-nav button.active, .home-screen nav.six-tab-nav button.active {color
     <button class="tile" onclick="tab('settings')"><span class="visually-hidden">Параметри та налаштування</span></button>
   </div>
 </div>
-<div class="card"><h3>Швидкий початок</h3><p class="muted">Створи клієнта, додай замовлення, зафіксуй результати обстеження та сформуй PDF-звіт.</p><div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button><button class="secondary" onclick="tab('inspection')">Нове обстеження</button></div></div>
+<div class="card"><h3>Швидкий початок</h3><p class="muted">Створи клієнта, додай замовлення, зафіксуй результати обстеження та сформуй PDF-звіт.</p><div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button><button class="secondary" onclick="tab('inspection')">Нове обстеження</button><button id="homeClients" class="primary" onclick="openClientDirectory()">КЛІЄНТИ</button></div></div>
 </section>
 <section id="workspace" class="panel" aria-label="Робочий кабінет">
 <h2 class="workspace-heading">Робочий кабінет</h2>
@@ -96,6 +96,18 @@ nav.six-tab-nav button.active, .home-screen nav.six-tab-nav button.active {color
 <label for="cNote">Примітки</label><textarea id="cNote"></textarea><div class="actions"><button class="primary" onclick="addClient()">Зберегти клієнта</button></div></div>
 <div class="card"><h3>База клієнтів</h3><div id="clientList" class="empty">Поки немає клієнтів</div></div>
 </section>
+<section id="clientDirectory" class="panel">
+<h2>База клієнтів</h2><div class="card"><label for="clientSearch">Пошук клієнта</label><input id="clientSearch" type="search" placeholder="Прізвище, телефон або адреса" oninput="renderClientDirectory()"><p class="muted" id="directoryCount" aria-live="polite"></p><div id="directoryList"></div></div>
+<div class="actions"><button class="primary" onclick="tab('clients')">+ Новий клієнт</button></div>
+</section>
+<section id="clientHistory" class="panel">
+<h2>Картка клієнта</h2><div id="historyProfile" class="card"></div>
+<div class="card"><h3 id="historyHeading">Історія обстежень</h3><div id="historyReports"></div></div>
+<div class="actions"><button id="clientNewInspection" class="primary" onclick="newClientInspection()">+ Нове обстеження клієнта</button><button class="secondary" onclick="goBack()">Назад</button></div>
+</section>
+<section id="clientEdit" class="panel"><h2>Редагування клієнта</h2><div class="card">
+<label for="ceName">ПІБ / Назва</label><input id="ceName"><label for="cePhone">Телефон</label><input id="cePhone" type="tel"><label for="ceAddress">Адреса об’єкта</label><input id="ceAddress"><label for="ceType">Тип об’єкта</label><input id="ceType"><label for="ceNote">Примітки</label><textarea id="ceNote"></textarea>
+<div class="actions"><button class="primary" onclick="saveClientEdit()">Зберегти зміни</button><button class="secondary" onclick="goBack()">Скасувати</button></div></div></section>
 <section id="orders" class="panel">
 <h2>Замовлення та розрахунок</h2><div class="card">
 <label for="oClient">Клієнт</label><select id="oClient"></select><label for="oService">Послуга</label><select id="oService"><option value="Обстеження будинку">Обстеження будинку</option><option value="Тепла підлога">Тепла підлога</option><option value="Електропроводка">Електропроводка</option><option value="Додаткове приміщення">Додаткове приміщення</option><option value="PDF-звіт">PDF-звіт</option></select>

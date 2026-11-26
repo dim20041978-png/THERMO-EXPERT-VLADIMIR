@@ -11,6 +11,8 @@ let data = defaults;
 let storageBlocked = false;
 let currentPdf = null;
 let screens = ['home'];
+let activeClientId = null;
+let editingClientId = null;
 
 function validate(source) {
   if (!source || !Object.keys(defaults).every(key => Array.isArray(source[key]))) {
@@ -96,6 +98,8 @@ function showScreen() {
   });
   $('backButton').hidden = screens.length === 1 && screen === 'home';
   if (screen === 'archive') renderPdfs();
+  if (screen === 'clientDirectory') renderClientDirectory();
+  if (screen === 'clientHistory') renderClientHistory();
   window.scrollTo(0, 0);
 }
 
@@ -134,6 +138,11 @@ function addClient() {
   };
   if (persist({ ...data, clients: [...data.clients, client] })) {
     ['cName', 'cPhone', 'cAddress', 'cNote'].forEach(id => $(id).value = '');
+    $('cType').selectedIndex = 0;
+    $('iClient').value = client.id;
+    renderFindings();
+    document.activeElement?.blur();
+    tab('home', true);
   }
 }
 
@@ -223,7 +232,8 @@ function saveReport() {
   };
   if (persist({ ...data, reports: [report, ...data.reports] })) {
     $('iConclusion').value = '';
-    tab('archive', true);
+    if (activeClientId === cid && screens[screens.length - 2] === 'clientHistory') goBack();
+    else tab('archive', true);
   }
 }
 
@@ -368,6 +378,97 @@ function openArchived(index) {
     report.conclusion, report.expert, report.date, report.title, report.conditions);
 }
 
+
+function clientReports(cid) {
+  return data.reports.filter(report => report.cid === cid);
+}
+function openClientDirectory() {
+  $('clientSearch').value = '';
+  tab('clientDirectory');
+}
+function renderClientDirectory() {
+  const raw = $('clientSearch').value.trim().toLocaleLowerCase('uk');
+  const digits = raw.replace(/\D/g, '');
+  const phoneQuery = digits.length >= 2 && /^[+\d\s().-]+$/.test(raw);
+  const clients = data.clients.filter(c => !raw ||
+    [c.name,c.phone,c.address,c.type].some(v => String(v||'').toLocaleLowerCase('uk').includes(raw)) ||
+    (phoneQuery && String(c.phone||'').replace(/\D/g,'').includes(digits)));
+  $('directoryCount').textContent = 'Клієнтів: ' + clients.length + ' / ' + data.clients.length;
+  const list=$('directoryList'); list.replaceChildren();
+  if (!clients.length) {list.textContent=raw?'Клієнтів не знайдено':'Поки немає клієнтів';return;}
+  for (const client of clients) {
+    const row=document.createElement('div');row.className='item';
+    const b=document.createElement('button');b.type='button';b.className='secondary directory-client';
+    b.innerHTML='<b>'+esc(client.name)+'</b><span class="muted">'+esc([client.phone,client.address,client.type].filter(Boolean).join(' · '))+'</span><span>Обстежень: '+clientReports(client.id).length+' ›</span>';
+    b.onclick=()=>openClientHistory(client.id);
+    row.append(b);list.append(row);
+  }
+}
+function openClientHistory(cid) {
+  if (!data.clients.some(c=>c.id===cid)) return;
+  activeClientId=cid;
+  tab('clientHistory');
+}
+function renderClientHistory() {
+  const client=data.clients.find(c=>c.id===activeClientId);
+  const profile=$('historyProfile'),list=$('historyReports');
+  profile.replaceChildren();list.replaceChildren();
+  $('clientNewInspection').disabled=!client;
+  if(!client){profile.textContent='Клієнта не знайдено';$('historyHeading').textContent='Історія обстежень';return;}
+  profile.innerHTML='<h3>'+esc(client.name)+'</h3><p>Телефон: '+esc(client.phone||'Не зазначено')+'</p><p>Адреса: '+esc(client.address||'Не зазначено')+'</p><p>Тип об’єкта: '+esc(client.type||'Не зазначено')+'</p>'+(client.note?'<p>Примітки: '+esc(client.note)+'</p>':'');
+  const edit=document.createElement('button');edit.className='secondary';edit.textContent='Редагувати дані клієнта';edit.onclick=openClientEdit;profile.append(edit);
+  const reports=clientReports(client.id);
+  $('historyHeading').textContent='Історія обстежень ('+reports.length+')';
+  if(!reports.length)list.textContent='Збережених обстежень немає';
+  for(const report of reports){
+    const row=document.createElement('div');row.className='item';
+    row.innerHTML='<b>'+esc(report.title||report.type||'Обстеження')+'</b><p class="muted">'+esc(report.date)+' · Результатів: '+report.findings.length+'</p>';
+    const actions=document.createElement('div');actions.className='actions';
+    for(const [label,action] of [['Перегляд','view'],['PDF','pdf'],['Надіслати','share']]){
+      const button=document.createElement('button');button.className='secondary';button.textContent=label;
+      button.onclick=()=>openClientReport(report.id,action);actions.append(button);
+    }
+    row.append(actions);list.append(row);
+  }
+  const count=pending(client.id).length;
+  if(count){const note=document.createElement('p');note.className='muted';note.textContent='Незавершені результати: '+count+'. Доступні в новому обстеженні клієнта.';list.append(note);}
+}
+function openClientReport(id,action) {
+  const index=data.reports.findIndex(r=>r.id===id&&r.cid===activeClientId);
+  if(index<0)return;
+  openArchived(index);
+  if(action==='pdf')savePdf();
+  if(action==='share')sharePdf();
+}
+function openClientEdit() {
+  const client=data.clients.find(c=>c.id===activeClientId);
+  if(!client)return;
+  editingClientId=client.id;
+  for(const [id,key] of [['ceName','name'],['cePhone','phone'],['ceAddress','address'],['ceType','type'],['ceNote','note']])$(id).value=client[key]||'';
+  tab('clientEdit');
+}
+function saveClientEdit() {
+  const client=data.clients.find(c=>c.id===editingClientId);
+  if(!client)return alert('Клієнта не знайдено');
+  const name=$('ceName').value.trim();
+  if(!name)return alert('Вкажіть ім’я або назву клієнта');
+  const edited={...client,name,phone:$('cePhone').value,address:$('ceAddress').value,type:$('ceType').value,note:$('ceNote').value};
+  if(persist({...data,clients:data.clients.map(c=>c.id===edited.id?edited:c)})){
+    editingClientId=null;document.activeElement?.blur();goBack();
+  }
+}
+function newClientInspection() {
+  if(!data.clients.some(c=>c.id===activeClientId))return;
+  const fields=['iRoom','iAir','iSurface','iHumidity','iDefect','iRecommendation','iPhoto','iConclusion'];
+  if($('iClient').value!==activeClientId && fields.some(id=>$(id).value)){
+    if(!confirm('Перейти до іншого клієнта? Незбережені поля поточного обстеження буде очищено. Збережені результати залишаться в базі.'))return;
+    fields.forEach(id=>$(id).value='');
+    if(window.resetRecommendationState)window.resetRecommendationState();
+  }
+  $('iClient').value=activeClientId;
+  renderFindings();tab('inspection');
+}
+
 function delClient(index) {
   if (confirm('Видалити клієнта? Пов’язані записи залишаться в історії.')) {
     persist({ ...data, clients: data.clients.filter((client, i) => i !== index) });
@@ -418,6 +519,8 @@ function render() {
   </div>`).join('') || 'Замовлень ще немає';
 
   renderFindings();
+  renderClientDirectory();
+  renderClientHistory();
   $('priceList').innerHTML = data.prices.map(([name, value], index) => `
     <div class="item"><label for="price-${index}">${esc(name)}, грн</label>
     <input id="price-${index}" data-price type="number" min="0" step=".01" value="${esc(value)}"></div>
