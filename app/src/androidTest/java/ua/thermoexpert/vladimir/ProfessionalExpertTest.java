@@ -153,8 +153,16 @@ public class ProfessionalExpertTest {
             click("#inspection button[onclick='makeReport()']");
             assertJs("$('reportContent').textContent.includes('Новий висновок') && $('report').classList.contains('active')");
             click("#report button[onclick='goBack()']");
+            js("$('iDefect').value=thermoDefectRows[60].text; syncRecommendations(); $('iRoom').value='Недодана ділянка'; $('defOpen').click(); $('recOpen').click(); window.confirm=()=>false");
+            click("#inspection button[onclick='saveReport()']");
+            assertJs("$('inspection').classList.contains('active') && data.reports.length===1 && $('iDefect').value!==''");
+            js("window.confirm=()=>true");
             click("#inspection button[onclick='saveReport()']");
             assertJs("$('archive').classList.contains('active') && data.reports.length === 2");
+            assertJs("inspectionResultFields().every(id=>$(id).value==='') && $('iConclusion').value==='' && $('autoRecStatus').textContent==='' && $('defPanel').hidden && $('recPanel').hidden && $('autoRecOptions').hidden");
+            js("tab('inspection'); syncRecommendations()");
+            assertJs("$('iDefect').value==='' && $('iRecommendation').value==='' && $('iConclusion').value==='' && pending($('iClient').value).length===0");
+            js("goBack()");
             click("#archiveList .item:nth-child(2) button");
             assertJs("$('reportContent').textContent.includes('Висновок 1.1.5')"
                 + " && $('reportContent').querySelector('img').getAttribute('src').startsWith('data:image/png;base64,')");

@@ -185,6 +185,18 @@ function readFile(file, readerMethod) {
   });
 }
 
+function inspectionResultFields() {
+  return ['iRoom','iAir','iSurface','iHumidity','iDefect','iRecommendation','iPhoto'];
+}
+
+function clearInspectionResultFields() {
+  inspectionResultFields().forEach(id => $(id).value = '');
+  if (window.resetRecommendationState) window.resetRecommendationState();
+  // Close both pickers and discard any checked, but not inserted, catalog entries.
+  $('defClose').click();
+  $('recClose').click();
+}
+
 async function addFinding() {
   const cid = $('iClient').value;
   if (!cid) return alert('Спочатку створіть клієнта');
@@ -207,9 +219,7 @@ async function addFinding() {
       if (!photoMarkup(finding.photo)) throw new Error('Invalid photo');
     }
     if (persist({ ...data, findings: [...data.findings, finding] })) {
-      ['iRoom', 'iAir', 'iSurface', 'iHumidity', 'iDefect', 'iRecommendation', 'iPhoto']
-        .forEach(id => $(id).value = '');
-      if (window.resetRecommendationState) window.resetRecommendationState();
+      clearInspectionResultFields();
     }
   } catch (error) {
     alert('Не вдалося прочитати фото.');
@@ -352,10 +362,13 @@ function refreshInspectionConclusion() {
 }
 
 function saveReport() {
+  if ($('addFindingButton').disabled) return alert('Дочекайтеся збереження поточного результату.');
   const cid = $('iClient').value;
   if (!cid) return alert('Оберіть клієнта');
   const findings = pending(cid);
   if (!findings.length) return alert('Додайте хоча б один результат обстеження');
+  if (inspectionResultFields().some(id => $(id).value.trim()) &&
+      !confirm('У формі є недоданий результат. Він не увійде до звіту. Зберегти наявні результати й очистити форму?')) return;
   const report = {
     id: uid(), cid, type: findings[findings.length - 1].type,
     findings: findings.map(finding => finding.id), conclusion: syncInspectionConclusion(),
@@ -363,6 +376,7 @@ function saveReport() {
     client: { ...data.clients.find(client => client.id === cid) }
   };
   if (persist({ ...data, reports: [report, ...data.reports] })) {
+    clearInspectionResultFields();
     $('iConclusion').value = '';
     conclusionDrafts.delete(cid);conclusionClientId=null;syncInspectionConclusion();
     if (activeClientId === cid && screens[screens.length - 2] === 'clientHistory') goBack();
