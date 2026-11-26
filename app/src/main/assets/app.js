@@ -139,7 +139,9 @@ function addClient() {
   if (persist({ ...data, clients: [...data.clients, client] })) {
     ['cName', 'cPhone', 'cAddress', 'cNote'].forEach(id => $(id).value = '');
     $('cType').selectedIndex = 0;
-    $('iClient').value = client.id;
+    // Do not reassign unsaved measurements to a different client.
+    const draftFields = ['iRoom', 'iAir', 'iSurface', 'iHumidity', 'iDefect', 'iRecommendation', 'iPhoto', 'iConclusion'];
+    if (!draftFields.some(id => $(id).value)) $('iClient').value = client.id;
     renderFindings();
     document.activeElement?.blur();
     tab('home', true);
