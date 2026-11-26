@@ -235,7 +235,7 @@ public class ProfessionalExpertTest {
             js("openArchived(0)");
             assertJs("currentPdf.title==='Звіт тепловізійного обстеження' && currentPdf.fs.length===2 && currentPdf.conditions==='Умови тесту'");
             js("goBack(); window.originalReport=JSON.stringify(data.reports[0]); window.sourceId=data.reports[0].id; window.beforeAct=data.reports.length; openArchiveTemplates(0)");
-            assertJs("$('archiveTemplatePicker').classList.contains('active') && $('actTemplateList').querySelector('button')");
+            assertJs("$('archiveTemplatePicker').classList.contains('active') && $('actTemplateList').querySelector('button') !== null");
             js("renderArchiveTemplates(true)");
             assertJs("$('actTemplateList').querySelectorAll('button').length===8");
             js("startArchivedTemplate(2)");
