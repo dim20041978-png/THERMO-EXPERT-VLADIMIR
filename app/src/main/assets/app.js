@@ -178,6 +178,7 @@ async function addFinding() {
   if (['iAir', 'iSurface', 'iHumidity'].some(id => !$(id).checkValidity())) {
     return alert('Перевірте температуру та вологість');
   }
+  if (window.syncRecommendations) window.syncRecommendations();
   const finding = {
     id: uid(), cid, type: $('iType').value, room: $('iRoom').value, air: $('iAir').value,
     surface: $('iSurface').value, humidity: $('iHumidity').value, defect: $('iDefect').value,
@@ -195,6 +196,7 @@ async function addFinding() {
     if (persist({ ...data, findings: [...data.findings, finding] })) {
       ['iRoom', 'iAir', 'iSurface', 'iHumidity', 'iDefect', 'iRecommendation', 'iPhoto']
         .forEach(id => $(id).value = '');
+      if (window.resetRecommendationState) window.resetRecommendationState();
     }
   } catch (error) {
     alert('Не вдалося прочитати фото.');

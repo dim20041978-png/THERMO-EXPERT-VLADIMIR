@@ -117,6 +117,17 @@ public class ProfessionalExpertTest {
                 + " const inputPhoto = new DataTransfer();"
                 + " inputPhoto.items.add(new File([Uint8Array.from(atob(data.findings[0].photo.split(',')[1]),"
                 + " c => c.charCodeAt(0))], 'thermal.png', {type:'image/png'})); $('iPhoto').files = inputPhoto.files;");
+            js("window.draftDefect=$('iDefect').value; $('iRecommendation').value='Власна примітка'; $('iRecommendation').dispatchEvent(new Event('input')); $('iDefect').value=thermoDefectRows[60].text; syncRecommendations()");
+            assertJs("$('iRecommendation').value==='Власна примітка\\n'+thermoRecommendationRows[60].text");
+            js("$('iDefect').value+='\\n'+thermoDefectRows[0].text+'\\n'+thermoDefectRows[60].text; syncRecommendations()");
+            assertJs("$('iRecommendation').value.split('\\n').length===3 && $('iRecommendation').value.includes(thermoRecommendationRows[0].text)");
+            js("$('iDefect').value=thermoDefectRows[0].text; syncRecommendations()");
+            assertJs("$('iRecommendation').value==='Власна примітка\\n'+thermoRecommendationRows[0].text");
+            js("addManualRecommendations([thermoRecommendationRows[0].text]); $('iDefect').value=''; syncRecommendations()");
+            assertJs("$('iRecommendation').value==='Власна примітка\\n'+thermoRecommendationRows[0].text");
+            js("$('iRecommendation').value=''; $('iDefect').value=''; resetRecommendationState(); $('defOpen').click(); $('defCat').value='6'; $('defCat').dispatchEvent(new Event('change')); $('defList').querySelector('input').click(); $('defInsert').click()");
+            assertJs("$('iDefect').value===thermoDefectRows[60].text && $('iRecommendation').value===thermoRecommendationRows[60].text");
+            js("$('iRecommendation').value=''; $('iDefect').value=''; resetRecommendationState(); $('iDefect').value=draftDefect");
             click("#addFindingButton");
             await("data.findings.length === 2 && !$('addFindingButton').disabled");
             assertJs("$('findingList').textContent.includes('Кухня') && $('findingList').querySelector('img') !== null");
