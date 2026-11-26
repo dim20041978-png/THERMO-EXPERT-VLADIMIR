@@ -248,89 +248,43 @@ function pending(cid) {
 }
 
 
-function conclusionNorm(s) {
-  return String(s??'').toLocaleLowerCase('uk').replace(/[’ʼ']/g,'').replace(/[^а-яіїєґa-z0-9\s]/gi,' ').replace(/\s+/g,' ').trim();
-}
-function conclusionCatalog() {
-  const recs=new Map((window.thermoRecommendationRows||[]).map(r=>[r.id,r]));
-  return (window.thermoDefectRows||[]).flatMap(d=>{
-    const r=recs.get(d.id);
-    return r&&r.title===d.title?[{title:d.title,description:d.text,aliases:d.aliases||[],recommendation:r.text,previousRecommendations:r.aliases||[]}]:[];
-  });
-}
-function splitConclusionDefects(value,catalog) {
-  // Preserve full catalog descriptions and free-text paragraphs; split separate
-  // sentences only if every sentence is a recognized catalog observation.
-  const byDescription=new Map(catalog.flatMap(r=>[r.description,...r.aliases].map(desc=>[conclusionNorm(desc),r])));
-  return String(value??'').split(/\r?\n/).flatMap(line=>{
-    line=line.trim().replace(/^\d+[.)]\s+/,'');
-    if(!line)return [];
-    if(byDescription.has(conclusionNorm(line)))return [line];
-    const sentences=line.replace(/([.!?])\s+(?=[А-ЯІЇЄҐA-Z])/gu,'$1\n').split('\n').map(x=>x.trim()).filter(Boolean);
-    // Known observations can be separated even if mixed with free text.
-    if(sentences.some(s=>byDescription.has(conclusionNorm(s)))){
-      const result=[];let other=[];
-      for(const s of sentences){
-        if(byDescription.has(conclusionNorm(s))){
-          if(other.length){result.push(other.join(' '));other=[];}
-          result.push(s);
-        }else other.push(s);
-      }
-      if(other.length)result.push(other.join(' '));
-      return result;
-    }
-    return [line];
-  });
+// Build the conclusion only from recommendations actually recorded by the expert.
+// Keep multi-sentence catalog recommendations intact: safety conditions and
+// qualifications must never be separated from the action they govern.
+function recommendationKey(text) {
+  return String(text).normalize('NFC').replace(/[’ʼ']/g,'’')
+    .replace(/\s+/g,' ').trim().toLocaleLowerCase('uk');
 }
 function buildInspectionConclusion(findings) {
-  const catalog=conclusionCatalog(), byDescription=new Map(catalog.flatMap(r=>[r.description,...r.aliases].map(desc=>[conclusionNorm(desc),r])));
-  const blocks=[], shared=[], usedGlobal=new Set();
-  let count=0, hasDefects=false;
+  const entries=new Map();
   for(const finding of findings){
-    const defects=splitConclusionDefects(finding.defect,catalog);
-    const recorded=[...new Set(String(finding.recommendation??'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];
-    const used=new Set();
-    const location=[finding.room,finding.type].filter(Boolean).join(' / ');
-    const measurements=[];
-    for(const [key,label,unit] of [['air','Повітря','°C'],['surface','Поверхня','°C'],['humidity','Вологість','%']]){
-      const v=finding[key];if(v!==''&&v!=null&&Number.isFinite(Number(v)))measurements.push(label+': '+v+' '+unit);
-    }
-    if(!defects.length){
-      if(location||measurements.length||recorded.length||finding.photo){
-        const summary=['Результат без опису дефекту'+(location?' — '+location:''),...measurements];
-        if(recorded.length)summary.push('Внесені рекомендації: '+recorded.join(' '));
-        shared.push(summary.join('\n'));
-      }
-      continue;
-    }
-    hasDefects=true;
-    for(const defect of defects){
-      const match=byDescription.get(conclusionNorm(defect));
-      const title=match?.title||'Зафіксоване спостереження';
-      const block=[(++count)+'. '+title+(location?' — '+location:''),defect];
-      if(measurements.length)block.push('Вимірювання ділянки: '+measurements.join('; ')+'.');
-      if(match){
-        const rec=recorded.find(r=>[match.recommendation,...match.previousRecommendations].some(text=>conclusionNorm(r)===conclusionNorm(text)));
-        if(rec){block.push('Рекомендація: '+rec);used.add(rec);if(conclusionNorm(rec)!==conclusionNorm(match.recommendation))block.push('Уточнена рекомендація з чинного довідника (перевірити): '+match.recommendation);}
-        else if(!recorded.length)block.push('Пропозиція з довідника (потребує підтвердження): '+match.recommendation);
-        else block.push('Окрему рекомендацію для цього дефекту потрібно уточнити.');
-      }else if(defects.length===1&&recorded.length){
-        block.push('Рекомендація: '+recorded.join('\n'));recorded.forEach(r=>used.add(r));
-      }else block.push('Окрему рекомендацію для цього спостереження потрібно уточнити.');
-      blocks.push(block.join('\n'));
-    }
-    const other=recorded.filter(r=>!used.has(r)&&!usedGlobal.has((location||finding.id||'')+'\n'+r));
-    if(other.length){
-      other.forEach(r=>usedGlobal.add((location||finding.id||'')+'\n'+r));
-      shared.push('Додаткові рекомендації'+(location?' — '+location:'')+':\n'+other.join('\n'));
+    const location=String(finding.room||'').trim();
+    const type=String(finding.type||'').trim();
+    // Catalog entries and manual list items are newline-separated. Do not
+    // split sentences or semicolons within one recommendation.
+    const recommendations=String(finding.recommendation??'').split(/\r?\n/)
+      .map(line=>line.trim().replace(/^(?:\d+[.)]|[•–-])\s+/u,'').trim()).filter(Boolean);
+    for(const recommendation of recommendations){
+      const key=recommendationKey(recommendation);
+      if(!entries.has(key))entries.set(key,{text:recommendation,locations:new Set()});
+      const entry=entries.get(key);
+      if(location)entry.locations.add(location);
+      else if(type)entry.locations.add(type);
     }
   }
-  if(!blocks.length&&!shared.length)return {text:'',count:0};
-  if(shared.length)blocks.push(shared.join('\n\n'));
-  if(hasDefects)blocks.push('Загальна рекомендація\nУточнити причини за результатами додаткових перевірок. Після усунення підтверджених дефектів провести повторне тепловізійне обстеження за порівнянних умов.');
-  else blocks.push('Загальна рекомендація\nНедостатньо описів дефектів для окремих висновків. Перевірити внесені дані.');
-  return {text:blocks.join('\n\n'),count};
+  if(!entries.size)return {text:'',count:0};
+  const blocks=[...entries.values()].map((entry,i)=>{
+    const locations=[...entry.locations];
+    return (i+1)+'. '+entry.text+(locations.length?'\nДілянка / напрямок: '+locations.join('; '):'');
+  });
+  // This is an explicitly general follow-up, not an inferred diagnosis.
+  const followUp='Після усунення підтверджених дефектів провести повторне тепловізійне обстеження за порівнянних умов.';
+  if(![...entries.values()].some(entry=>recommendationKey(entry.text)===recommendationKey(followUp))){
+    blocks.push('Загальна рекомендація\n'+followUp);
+  }
+  return {text:blocks.join('\n\n'),count:entries.size};
 }
+
 function conclusionHtml(value) {
   return String(value||'Висновок не внесено').split('\n').map(line=>{
     const safe=esc(line);
@@ -361,7 +315,7 @@ function syncInspectionConclusion(force=false) {
   if(force||!manual){
     field.value=generated.text;
     conclusionDrafts.set(cid,{value:field.value,automatic:generated.text,signature});
-    $('conclusionStatus').textContent=generated.count?'Автоматично сформовано висновків: '+generated.count+'. Перевірте перед збереженням.':generated.text?'Підсумок сформовано; описів дефектів немає.':'Додайте результати обстеження.';
+    $('conclusionStatus').textContent=generated.count?'Висновок сформовано з рекомендацій: '+generated.count+'. Перевірте перед збереженням.':findings.length?'У доданих результатах немає рекомендацій. Внесіть їх або заповніть висновок вручну.':'Додайте результати обстеження.';
   }else{
     old.value=field.value;conclusionDrafts.set(cid,old);
     $('conclusionStatus').textContent=old.signature!==signature?'Результати змінилися. Ручний висновок збережено; перевірте або оновіть його.':'Ручний висновок збережено. Перевірте перед збереженням.';

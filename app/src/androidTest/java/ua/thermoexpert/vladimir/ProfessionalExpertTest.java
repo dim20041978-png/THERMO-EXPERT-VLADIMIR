@@ -127,7 +127,7 @@ public class ProfessionalExpertTest {
             assertJs("(()=>{$('iType').value='Електропроводка'; $('iType').dispatchEvent(new Event('change')); $('defOpen').click(); $('defList').querySelector('input').click(); $('defAll').click(); const all=$('defCat').options.length===11&&$('defList').querySelectorAll('input').length===500&&!$('defList').querySelector('input:checked'); $('defSearch').value='Клема автомата'; $('defSearch').dispatchEvent(new Event('input')); const search=$('defList').querySelectorAll('input').length>0; $('iType').value='Тепла підлога'; $('iType').dispatchEvent(new Event('change')); const reset=!$('defAll').checked&&$('defSearch').value===''&&$('defList').querySelectorAll('input').length===50; $('defClose').click();return all&&search&&reset;})()");
             assertJs("thermoDefectRows.length===500 && thermoRecommendationRows.length===500 && new Set(thermoDefectRows.map(r=>r.id)).size===500 && new Set(thermoDefectRows.map(r=>r.text)).size===500");
             assertJs("thermoDefectRows.every((d,i)=>d.id===thermoRecommendationRows[i].id && d.title===thermoRecommendationRows[i].title && d.cat===thermoRecommendationRows[i].cat)");
-            assertJs("(()=>{const d=thermoDefectRows.find(x=>x.aliases.length);const r=thermoRecommendationRows[d.id];const c=buildInspectionConclusion([{defect:d.aliases[0],recommendation:r.aliases[0]}]);return c.count===1&&c.text.includes(r.text);})()");
+            assertJs("(()=>{const d=thermoDefectRows.find(x=>x.aliases.length);const r=thermoRecommendationRows[d.id];const c=buildInspectionConclusion([{defect:d.aliases[0],recommendation:r.aliases[0]}]);return c.count===1&&c.text.includes(r.aliases[0])&&!c.text.includes(d.aliases[0]);})()");
             assertJs("(()=>{for(const d of thermoDefectRows){const r=thermoRecommendationRows.find(x=>x.id===d.id);const c=buildInspectionConclusion([{defect:d.text,recommendation:r.text}]);if(c.count!==1||!c.text.includes(r.text))return false;}return true;})()");
             click("[data-inspection]:nth-child(3)");
             js("$('iClient').selectedIndex = 1; $('iClient').dispatchEvent(new Event('change'));"
@@ -146,12 +146,13 @@ public class ProfessionalExpertTest {
             assertJs("$('iRecommendation').value==='Власна примітка\\n'+thermoRecommendationRows[0].text");
             js("$('iRecommendation').value=''; $('iDefect').value=''; resetRecommendationState(); $('defOpen').click(); $('defCat').value='6'; $('defCat').dispatchEvent(new Event('change')); $('defList').querySelector('input').click(); $('defInsert').click()");
             assertJs("$('iDefect').value===thermoDefectRows[60].text && $('iRecommendation').value===thermoRecommendationRows[60].text");
-            js("$('iRecommendation').value=''; $('iDefect').value=''; resetRecommendationState(); $('iDefect').value=draftDefect");
+            js("$('iRecommendation').value=''; $('iDefect').value=''; resetRecommendationState(); $('iDefect').value=draftDefect; $('iRecommendation').value='Перевірити ущільнення вікна.'");
             click("#addFindingButton");
             await("data.findings.length === 2 && !$('addFindingButton').disabled");
             assertJs("$('findingList').textContent.includes('Кухня') && $('findingList').querySelector('img') !== null");
-            assertJs("$('iConclusion').value.startsWith('1. ') && $('conclusionFormatted').querySelector('b')!==null");
-            assertJs("(()=>{const ids=[60,0,15];const f={room:'Тест',air:'0',surface:'',defect:ids.map(i=>thermoDefectRows[i].text).join(' '),recommendation:ids.map(i=>thermoRecommendationRows[i].text).join('\\n')};const r=buildInspectionConclusion([f]);return r.count===3&&ids.every(i=>r.text.includes(thermoRecommendationRows[i].text))&&r.text.includes('Повітря: 0 °C')&&r.text.includes('3. ');})()");
+            assertJs("$('iConclusion').value.startsWith('1. Перевірити ущільнення вікна.') && !$('iConclusion').value.includes('Ділянка біля вікна') && $('conclusionFormatted').querySelector('b')!==null");
+            assertJs("(()=>{const ids=[60,0,15];const f={room:'Тест',air:'0',defect:ids.map(i=>thermoDefectRows[i].text).join(' '),recommendation:ids.map(i=>thermoRecommendationRows[i].text).join('\\n')};const r=buildInspectionConclusion([f,{...f,room:'Друга ділянка'}]);return r.count===3&&ids.every(i=>r.text.includes(thermoRecommendationRows[i].text)&&!r.text.includes(thermoDefectRows[i].text))&&!r.text.includes('Повітря: 0 °C')&&r.text.includes('3. ')&&r.text.includes('Тест; Друга ділянка');})()");
+            assertJs("buildInspectionConclusion([{defect:'Дефект без рекомендацій',recommendation:''}]).text===''");
             js("$('iConclusion').value = 'Новий висновок'; $('iConclusion').dispatchEvent(new Event('input')); syncInspectionConclusion()");
             assertJs("$('iConclusion').value==='Новий висновок'");
             js("$('iClient').selectedIndex=0; renderFindings(); $('iClient').selectedIndex=1; renderFindings()");
