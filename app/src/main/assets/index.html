@@ -122,9 +122,9 @@ nav.six-tab-nav button.active, .home-screen nav.six-tab-nav button.active {color
 <div class="grid two"><div><label for="iAir">Температура повітря, °C</label><input id="iAir" type="number" step=".1"></div><div><label for="iSurface">Температура поверхні, °C</label><input id="iSurface" type="number" step=".1"></div></div>
 <label for="iHumidity">Вологість, % (за наявності)</label><input id="iHumidity" type="number" min="0" max="100">
 <label for="iPhoto">Фото тепловізора / камери</label><input id="iPhoto" type="file" accept="image/*" capture="environment">
-<label for="iDefect">Опис спостереження / дефекту</label><textarea id="iDefect" placeholder="Опишіть місце та характер температурної аномалії"></textarea><div class="actions"><button type="button" class="secondary" id="defOpen">📋 Приклади опису дефектів</button></div><div id="defPanel" hidden class="card"><h3>Приклади опису дефектів</h3><p class="muted">100 шаблонів. Вибирайте лише підтверджені спостереження та доповнюйте фактичними вимірюваннями.</p><label for="defCat">Категорія</label><select id="defCat"></select><label for="defSearch">Пошук</label><input id="defSearch" type="search" placeholder="Назва дефекту"><p id="defCount" aria-live="polite"></p><div id="defList" style="max-height:45vh;overflow:auto"></div><div class="actions"><button type="button" class="primary" id="defInsert">Додати опис</button><button type="button" class="secondary" id="defBoth">Додати опис і рекомендацію</button><button type="button" class="secondary" id="defClose">Закрити</button></div></div>
+<label for="iDefect">Опис спостереження / дефекту</label><textarea id="iDefect" placeholder="Опишіть місце та характер температурної аномалії"></textarea><div class="actions"><button type="button" class="secondary" id="defOpen">📋 Приклади опису дефектів</button></div><div id="defPanel" hidden class="card"><h3>Приклади опису дефектів</h3><p class="muted">100 шаблонів. Вибирайте лише підтверджені спостереження та доповнюйте фактичними вимірюваннями.</p><label for="defCat">Категорія</label><select id="defCat"></select><label style="display:flex;align-items:center;gap:8px;font-size:13px"><input id="defAll" type="checkbox" style="width:auto;min-height:0;margin:0">Показати всі категорії</label><p class="muted" id="defScope" aria-live="polite"></p><label for="defSearch">Пошук</label><input id="defSearch" type="search" placeholder="Назва дефекту"><p id="defCount" aria-live="polite"></p><div id="defList" style="max-height:45vh;overflow:auto"></div><div class="actions"><button type="button" class="primary" id="defInsert">Додати опис</button><button type="button" class="secondary" id="defBoth">Додати опис і рекомендацію</button><button type="button" class="secondary" id="defClose">Закрити</button></div></div>
 <label for="iRecommendation">Рекомендації</label><textarea id="iRecommendation"></textarea><p id="autoRecStatus" class="muted" aria-live="polite"></p><div id="autoRecOptions" hidden></div><div class="actions"><button type="button" class="secondary" id="recOpen">📚 Довідник рекомендацій</button></div>
-<div id="recPanel" hidden class="card"><h3>Довідник рекомендацій</h3><p class="muted">100 шаблонів. Уточнюйте за результатами вимірювань. Електричні роботи — кваліфікованим спеціалістом після знеструмлення.</p><label for="recCat">Категорія</label><select id="recCat"></select><label for="recSearch">Пошук</label><input id="recSearch" type="search" placeholder="Назва дефекту"><p id="recCount" aria-live="polite"></p><div id="recList" style="max-height:45vh;overflow:auto"></div><div class="actions"><button type="button" class="primary" id="recInsert">Додати обрані</button><button type="button" class="secondary" id="recClose">Закрити</button></div></div>
+<div id="recPanel" hidden class="card"><h3>Довідник рекомендацій</h3><p class="muted">100 шаблонів. Уточнюйте за результатами вимірювань. Електричні роботи — кваліфікованим спеціалістом після знеструмлення.</p><label for="recCat">Категорія</label><select id="recCat"></select><label style="display:flex;align-items:center;gap:8px;font-size:13px"><input id="recAll" type="checkbox" style="width:auto;min-height:0;margin:0">Показати всі категорії</label><p class="muted" id="recScope" aria-live="polite"></p><label for="recSearch">Пошук</label><input id="recSearch" type="search" placeholder="Назва дефекту"><p id="recCount" aria-live="polite"></p><div id="recList" style="max-height:45vh;overflow:auto"></div><div class="actions"><button type="button" class="primary" id="recInsert">Додати обрані</button><button type="button" class="secondary" id="recClose">Закрити</button></div></div>
 <div class="actions"><button class="primary" id="addFindingButton" onclick="addFinding()">Додати результат</button></div></div>
 <div class="card"><h3>Результати поточного обстеження</h3><div id="findingList" class="empty">Ще немає доданих результатів</div></div>
 <div class="card"><h3>Підсумковий висновок експерта</h3><label for="iConclusion">Загальний висновок</label><textarea id="iConclusion" rows="8" placeholder="Підсумковий висновок за результатами обстеження..."></textarea><p class="muted" id="conclusionStatus" aria-live="polite"></p><div class="actions"><button type="button" class="secondary" id="refreshConclusion" onclick="refreshInspectionConclusion()">↻ Оновити висновок</button></div><details id="conclusionPreview" hidden><summary>Перегляд оформленого висновку</summary><div id="conclusionFormatted"></div></details><label for="iExpert">Експерт / виконавець</label><input id="iExpert" value="Експерт THERMO EXPERT VLADIMIR"><div class="actions"><button class="primary" onclick="saveReport()">Зберегти обстеження</button><button class="secondary" onclick="makeReport()">Сформувати PDF / Друк</button></div></div>
@@ -175,11 +175,22 @@ const get=id=>document.getElementById(id);
 const rows=groups.flatMap((g,i)=>g.slice(1).map((s,j)=>({id:i*10+j,cat:i,title:s.split('|')[0],text:s.split('|')[1]})));
 window.thermoRecommendationRows=rows;
 const chosen=new Set(), cat=get('recCat'), search=get('recSearch'), list=get('recList'), panel=get('recPanel');
-cat.add(new Option('Усі категорії','all'));groups.forEach((g,i)=>cat.add(new Option(g[0],String(i))));
-function render(){list.replaceChildren();const q=search.value.trim().toLocaleLowerCase('uk');const filtered=rows.filter(r=>(cat.value==='all'||String(r.cat)===cat.value)&& (r.title+' '+r.text).toLocaleLowerCase('uk').includes(q));get('recCount').textContent='Знайдено: '+filtered.length+' / 100; обрано: '+chosen.size;filtered.forEach(r=>{const label=document.createElement('label');label.style.cssText='display:block;padding:10px 0;border-bottom:1px solid #888';const check=document.createElement('input');check.type='checkbox';check.style.cssText='width:auto;margin-right:8px';check.checked=chosen.has(r.id);check.onchange=()=>{if(check.checked)chosen.add(r.id);else chosen.delete(r.id);get('recCount').textContent='Знайдено: '+filtered.length+' / 100; обрано: '+chosen.size};label.append(check,document.createTextNode(r.title+' — '+r.text));list.append(label);});}
-get('recOpen').onclick=()=>{chosen.clear();search.value='';cat.value='all';panel.hidden=false;render();};
-get('recClose').onclick=()=>{panel.hidden=true;chosen.clear();};
-cat.onchange=render;search.oninput=render;
+const all=get('recAll'), type=get('iType');
+function allowed(){return inspectionCategories(type.value,all.checked);}
+function refreshCategories(){
+  const scope=allowed();
+  cat.replaceChildren(new Option(all.checked?'Усі категорії':'Усі категорії обстеження','all'));
+  scope.forEach(i=>cat.add(new Option(groups[i][0],String(i))));
+  cat.value='all';chosen.clear();
+  get('recScope').textContent=all.checked?'Показано повний довідник':'Категорії: '+type.value;
+  render();
+}
+all.onchange=refreshCategories;
+type.addEventListener('change',()=>{all.checked=false;search.value='';refreshCategories();});
+function render(){list.replaceChildren();const q=search.value.trim().toLocaleLowerCase('uk');const scope=allowed(), total=rows.filter(r=>scope.includes(r.cat)).length;const filtered=rows.filter(r=>scope.includes(r.cat)&&(cat.value==='all'||String(r.cat)===cat.value)&& (r.title+' '+r.text).toLocaleLowerCase('uk').includes(q));get('recCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size;filtered.forEach(r=>{const label=document.createElement('label');label.style.cssText='display:block;padding:10px 0;border-bottom:1px solid #888';const check=document.createElement('input');check.type='checkbox';check.style.cssText='width:auto;margin-right:8px';check.checked=chosen.has(r.id);check.onchange=()=>{if(check.checked)chosen.add(r.id);else chosen.delete(r.id);get('recCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size};label.append(check,document.createTextNode(r.title+' — '+r.text));list.append(label);});}
+get('recOpen').onclick=()=>{chosen.clear();search.value='';all.checked=false;panel.hidden=false;refreshCategories();};
+get('recClose').onclick=()=>{panel.hidden=true;all.checked=false;search.value='';refreshCategories();};
+cat.onchange=render;search.oninput=render;refreshCategories();refreshCategories();
 get('recInsert').onclick=()=>{if(!chosen.size)return;window.addManualRecommendations(rows.filter(r=>chosen.has(r.id)).map(r=>r.text));chosen.clear();panel.hidden=true;};
 })();
 </script>
@@ -190,10 +201,21 @@ const get=id=>document.getElementById(id);
 const rows=groups.flatMap((g,i)=>g.slice(1).map((s,j)=>({id:i*10+j,cat:i,title:s.split('|')[0],text:s.split('|')[1]})));
 window.thermoDefectRows=rows;
 const chosen=new Set(), cat=get('defCat'), search=get('defSearch'), list=get('defList'), panel=get('defPanel');
-cat.add(new Option('Усі категорії','all'));groups.forEach((g,i)=>cat.add(new Option(g[0],String(i))));
-function render(){list.replaceChildren();const q=search.value.trim().toLocaleLowerCase('uk');const filtered=rows.filter(r=>(cat.value==='all'||String(r.cat)===cat.value)&& (r.title+' '+r.text).toLocaleLowerCase('uk').includes(q));get('defCount').textContent='Знайдено: '+filtered.length+' / 100; обрано: '+chosen.size;filtered.forEach(r=>{const label=document.createElement('label');label.style.cssText='display:block;padding:10px 0;border-bottom:1px solid #888';const check=document.createElement('input');check.type='checkbox';check.style.cssText='width:auto;margin-right:8px';check.checked=chosen.has(r.id);check.onchange=()=>{if(check.checked)chosen.add(r.id);else chosen.delete(r.id);get('defCount').textContent='Знайдено: '+filtered.length+' / 100; обрано: '+chosen.size};label.append(check,document.createTextNode(r.title+' — '+r.text));list.append(label);});}
-get('defOpen').onclick=()=>{chosen.clear();search.value='';cat.value='all';panel.hidden=false;render();};
-get('defClose').onclick=()=>{panel.hidden=true;chosen.clear();};
+const all=get('defAll'), type=get('iType');
+function allowed(){return inspectionCategories(type.value,all.checked);}
+function refreshCategories(){
+  const scope=allowed();
+  cat.replaceChildren(new Option(all.checked?'Усі категорії':'Усі категорії обстеження','all'));
+  scope.forEach(i=>cat.add(new Option(groups[i][0],String(i))));
+  cat.value='all';chosen.clear();
+  get('defScope').textContent=all.checked?'Показано повний довідник':'Категорії: '+type.value;
+  render();
+}
+all.onchange=refreshCategories;
+type.addEventListener('change',()=>{all.checked=false;search.value='';refreshCategories();});
+function render(){list.replaceChildren();const q=search.value.trim().toLocaleLowerCase('uk');const scope=allowed(), total=rows.filter(r=>scope.includes(r.cat)).length;const filtered=rows.filter(r=>scope.includes(r.cat)&&(cat.value==='all'||String(r.cat)===cat.value)&& (r.title+' '+r.text).toLocaleLowerCase('uk').includes(q));get('defCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size;filtered.forEach(r=>{const label=document.createElement('label');label.style.cssText='display:block;padding:10px 0;border-bottom:1px solid #888';const check=document.createElement('input');check.type='checkbox';check.style.cssText='width:auto;margin-right:8px';check.checked=chosen.has(r.id);check.onchange=()=>{if(check.checked)chosen.add(r.id);else chosen.delete(r.id);get('defCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size};label.append(check,document.createTextNode(r.title+' — '+r.text));list.append(label);});}
+get('defOpen').onclick=()=>{chosen.clear();search.value='';all.checked=false;panel.hidden=false;refreshCategories();};
+get('defClose').onclick=()=>{panel.hidden=true;all.checked=false;search.value='';refreshCategories();};
 cat.onchange=render;search.oninput=render;
 function insert(){if(!chosen.size)return;const field=get('iDefect');const lines=field.value.split('\n');for(const r of rows.filter(r=>chosen.has(r.id))){if(!lines.some(l=>l.trim()===r.text))lines.push(r.text);}field.value=lines.filter(l=>l.trim()).join('\n');field.dispatchEvent(new Event('input',{bubbles:true}));window.syncRecommendations();chosen.clear();panel.hidden=true;}get('defInsert').onclick=insert;get('defBoth').onclick=insert;
 })();

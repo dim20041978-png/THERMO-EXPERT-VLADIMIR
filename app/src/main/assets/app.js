@@ -86,6 +86,19 @@ function photoMarkup(photo) {
   return '<img class="photo" alt="Фото обстеження" src="' + esc(photo) + '">';
 }
 
+// Category indexes are shared by the two existing 100-entry catalogs.
+const inspectionCategoryMap = Object.freeze({
+  'Будинок / тепловтрати':Object.freeze([2,3,4,7]),
+  'Тепла підлога':Object.freeze([6]),
+  'Електропроводка':Object.freeze([0,1]),
+  'Система опалення':Object.freeze([5,6]),
+  'Інженерні системи':Object.freeze([8,7]),
+  'Енергоаудит':Object.freeze([9,2,3,4,5,8])
+});
+function inspectionCategories(type, showAll=false) {
+  return showAll ? Array.from({length:10},(_,i)=>i) : (inspectionCategoryMap[type]||[]);
+}
+
 function showScreen() {
   const screen = screens[screens.length - 1];
   document.body.classList.toggle('home-screen', screen === 'home');
@@ -127,6 +140,7 @@ $('backButton').onclick = goBack;
 document.querySelectorAll('[data-inspection]').forEach(button => {
   button.onclick = () => {
     $('iType').value = button.dataset.inspection;
+    $('iType').dispatchEvent(new Event('change',{bubbles:true}));
     tab('inspection');
   };
 });

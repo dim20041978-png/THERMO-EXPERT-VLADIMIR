@@ -123,6 +123,8 @@ public class ProfessionalExpertTest {
             assertJs("data.orders.length === 2 && data.orders[0].total === 1100.25");
 
             click("nav [data-tab=home]");
+            assertJs("(()=>{const expected={'Будинок / тепловтрати':[2,3,4,7],'Тепла підлога':[6],'Електропроводка':[0,1],'Система опалення':[5,6],'Інженерні системи':[8,7],'Енергоаудит':[9,2,3,4,5,8]}; $('defOpen').click(); $('recOpen').click(); for(const [type,ids] of Object.entries(expected)){ $('iType').value=type; $('iType').dispatchEvent(new Event('change')); for(const p of ['def','rec']){if([...$(p+'Cat').options].slice(1).map(o=>+o.value).join(',')!==ids.join(',')||$(p+'List').querySelectorAll('input').length!==ids.length*10)return false;}} $('defClose').click(); $('recClose').click();return true;})()");
+            assertJs("(()=>{$('iType').value='Електропроводка'; $('iType').dispatchEvent(new Event('change')); $('defOpen').click(); $('defList').querySelector('input').click(); $('defAll').click(); const all=$('defCat').options.length===11&&$('defList').querySelectorAll('input').length===100&&!$('defList').querySelector('input:checked'); $('defSearch').value='Клема автомата'; $('defSearch').dispatchEvent(new Event('input')); const search=$('defList').querySelectorAll('input').length>0; $('iType').value='Тепла підлога'; $('iType').dispatchEvent(new Event('change')); const reset=!$('defAll').checked&&$('defSearch').value===''&&$('defList').querySelectorAll('input').length===10; $('defClose').click();return all&&search&&reset;})()");
             click("[data-inspection]:nth-child(3)");
             js("$('iClient').selectedIndex = 1; $('iClient').dispatchEvent(new Event('change'));"
                 + " $('iRoom').value = 'Кухня'; $('iDefect').value = 'Ділянка біля вікна';"
