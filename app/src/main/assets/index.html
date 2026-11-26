@@ -190,7 +190,7 @@ type.addEventListener('change',()=>{all.checked=false;search.value='';refreshCat
 function render(){list.replaceChildren();const q=search.value.trim().toLocaleLowerCase('uk');const scope=allowed(), total=rows.filter(r=>scope.includes(r.cat)).length;const filtered=rows.filter(r=>scope.includes(r.cat)&&(cat.value==='all'||String(r.cat)===cat.value)&& (r.title+' '+r.text).toLocaleLowerCase('uk').includes(q));get('recCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size;filtered.forEach(r=>{const label=document.createElement('label');label.style.cssText='display:block;padding:10px 0;border-bottom:1px solid #888';const check=document.createElement('input');check.type='checkbox';check.style.cssText='width:auto;margin-right:8px';check.checked=chosen.has(r.id);check.onchange=()=>{if(check.checked)chosen.add(r.id);else chosen.delete(r.id);get('recCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size};label.append(check,document.createTextNode(r.title+' — '+r.text));list.append(label);});}
 get('recOpen').onclick=()=>{chosen.clear();search.value='';all.checked=false;panel.hidden=false;refreshCategories();};
 get('recClose').onclick=()=>{panel.hidden=true;all.checked=false;search.value='';refreshCategories();};
-cat.onchange=render;search.oninput=render;refreshCategories();refreshCategories();
+cat.onchange=render;search.oninput=render;refreshCategories();
 get('recInsert').onclick=()=>{if(!chosen.size)return;window.addManualRecommendations(rows.filter(r=>chosen.has(r.id)).map(r=>r.text));chosen.clear();panel.hidden=true;};
 })();
 </script>
@@ -216,7 +216,7 @@ type.addEventListener('change',()=>{all.checked=false;search.value='';refreshCat
 function render(){list.replaceChildren();const q=search.value.trim().toLocaleLowerCase('uk');const scope=allowed(), total=rows.filter(r=>scope.includes(r.cat)).length;const filtered=rows.filter(r=>scope.includes(r.cat)&&(cat.value==='all'||String(r.cat)===cat.value)&& (r.title+' '+r.text).toLocaleLowerCase('uk').includes(q));get('defCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size;filtered.forEach(r=>{const label=document.createElement('label');label.style.cssText='display:block;padding:10px 0;border-bottom:1px solid #888';const check=document.createElement('input');check.type='checkbox';check.style.cssText='width:auto;margin-right:8px';check.checked=chosen.has(r.id);check.onchange=()=>{if(check.checked)chosen.add(r.id);else chosen.delete(r.id);get('defCount').textContent='Знайдено: '+filtered.length+' / '+total+'; обрано: '+chosen.size};label.append(check,document.createTextNode(r.title+' — '+r.text));list.append(label);});}
 get('defOpen').onclick=()=>{chosen.clear();search.value='';all.checked=false;panel.hidden=false;refreshCategories();};
 get('defClose').onclick=()=>{panel.hidden=true;all.checked=false;search.value='';refreshCategories();};
-cat.onchange=render;search.oninput=render;
+cat.onchange=render;search.oninput=render;refreshCategories();
 function insert(){if(!chosen.size)return;const field=get('iDefect');const lines=field.value.split('\n');for(const r of rows.filter(r=>chosen.has(r.id))){if(!lines.some(l=>l.trim()===r.text))lines.push(r.text);}field.value=lines.filter(l=>l.trim()).join('\n');field.dispatchEvent(new Event('input',{bubbles:true}));window.syncRecommendations();chosen.clear();panel.hidden=true;}get('defInsert').onclick=insert;get('defBoth').onclick=insert;
 })();
 </script>
